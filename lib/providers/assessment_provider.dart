@@ -12,6 +12,13 @@ class AssessmentProvider extends ChangeNotifier {
   Map<String, int> get skillRatings => Map.unmodifiable(_skillRatings);
 
   void setProfile(UserProfile profile) {
+    final previousMajor = _profile?.major.trim().toLowerCase();
+    final nextMajor = profile.major.trim().toLowerCase();
+    // Pertanyaan minat mengikuti jurusan, jadi jawaban lama tidak boleh
+    // dipakai ulang saat jurusan berubah.
+    if (previousMajor != nextMajor) {
+      _interestAnswers.clear();
+    }
     _profile = profile;
     notifyListeners();
   }
