@@ -115,7 +115,7 @@ Gerbang C: alur penuh berjalan di APK debug: daftar, profil, asesmen, hasil dari
 ### Blok D (jam 20–28): Stabilisasi dan istirahat
 
 - [ ] Bagi shift istirahat minimal 4–5 jam per orang (anggota yang kurang tidur membuat bug dan salah demo)
-- [ ] &#91;Must\] D: jalankan 5 skenario uji dan checklist QA di bagian 3, catat bug di tabel bug — **PARSIAL**: uji otomatis & bug log selesai; endpoint Gemini kini terjangkau tetapi kuota key habis (HTTP 429), jadi 5 skenario live & uji HP **MENUNGGU** kuota/cloud ([L-08](HASIL-KERJA.md#l-08)).
+- [ ] &#91;Must\] D: jalankan 5 skenario uji dan checklist QA di bagian 3, catat bug di tabel bug — **PARSIAL**: uji otomatis & bug log selesai; 5 skenario live **LULUS 5/5** (2026-11-14, model `gemini-3.1-flash-lite` lewat rotasi model, [Rotasi model Gemini](HASIL-KERJA.md#rotasi-model-gemini-404429--habib--2026-11-14)); uji HP **MENUNGGU** perangkat & akses Firebase.
 - [ ] &#91;Must\] C: perbaiki prompt berdasarkan hasil uji (kualitas alasan, format JSON, konsistensi skor)
 - [ ] &#91;Must\] A: perbaiki bug UI yang paling terlihat (overflow, teks terpotong, tombol tidak aktif)
 - [ ] &#91;Must\] B: uji aturan Firestore (pengguna A tidak bisa membaca data pengguna B)
@@ -128,6 +128,8 @@ Gerbang D: 5 skenario uji menghasilkan hasil masuk akal dan tidak crash.
 - [ ] &#91;Should\] Mode demo: tombol yang mengisi jawaban contoh otomatis
 - [x] &#91;Should\] Fallback: jika Gemini gagal, tampilkan hasil contoh dengan label jelas — bukti: `sample_result.dart` tervalidasi + label di `result_screen.dart` ([L-08](HASIL-KERJA.md#l-08))
 - [x] &#91;Should\] Roadmap 4 minggu dibuat lebih konkret di prompt — bukti: prompt + `responseSchema` + validator ([L-08](HASIL-KERJA.md#l-08))
+- [x] &#91;Should\] Fallback: opsi kedua OpenAI GPT saat Gemini gagal — bukti: `career_analysis_service.dart` + 15 tes `ai_fallback_test.dart` (97/97 lulus); verifikasi live terhalang kredit akun OpenAI habis ([Fallback OpenAI](HASIL-KERJA.md#fallback-openai--habib--2026-11-14))
+- [x] &#91;Should\] Rotasi model Gemini saat 404/429 (daftar `GEMINI_MODEL` dipisah koma) — bukti: 9 tes rotasi + QA live 5/5 LULUS pada `gemini-3.1-flash-lite` ([Rotasi model Gemini](HASIL-KERJA.md#rotasi-model-gemini-404429--habib--2026-11-14))
 - [ ] &#91;Could\] Google Sign-In (hanya jika SHA-1 sudah dipahami dan blok D bersih)
 - [ ] &#91;Could\] Grafik radar minat atau kartu hasil yang bisa dibagikan
 - [ ] &#91;Must\] Ikon dan nama aplikasi, splash, disclaimer di halaman hasil

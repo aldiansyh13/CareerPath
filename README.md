@@ -16,14 +16,17 @@ Tagline: *Temukan karier cocok & rencana belajar 30 hari.*
 - **Ringkasan & persetujuan** — jawaban dapat ditinjau, ada persetujuan penggunaan data sebelum analisis; submit ganda dicegah.
 - **Analisis Gemini (REST)** — meminta JSON valid: `summary` + tepat **3 karier dari 8 katalog**, `match_score` 0–100, alasan berbasis jawaban, `skills_owned`, `skills_missing`, dan roadmap 4 minggu. Respons divalidasi sebelum ditampilkan.
 - **Hasil & detail** — 3 kartu karier, label *Contoh hasil (offline)* bila relevan, disclaimer, skill dimiliki/kurang, roadmap 4 minggu.
+- **Career Journey** — pilih satu rekomendasi sebagai fokus, lanjutkan checklist roadmap 30 hari dari Beranda, lihat minggu aktif dan langkah berikutnya, lalu simpan progres secara lokal agar tetap ada setelah aplikasi dibuka ulang.
 - **Riwayat** — hasil disimpan ke penyimpanan lokal dan Firestore (bila login) serta dapat dibuka tanpa panggilan Gemini baru.
 - **Fallback & mode demo** — jika Gemini gagal/belum dikonfigurasi, tersedia hasil contoh berlabel jelas.
 - **Ketahanan** — loading, pesan error dengan tombol coba lagi, state kosong, dan pemisahan error analisis vs error simpan.
 
 ## Kebutuhan
 
-- Flutter **3.50+** / Dart **3.14+** (proyek memakai `sdk: ^3.4.0`).
+- Pemeriksaan kode dan tes terakhir memakai Flutter **3.29.3** / Dart **3.7.2** (proyek memakai `sdk: ^3.4.0`).
 - Android SDK + perangkat/emulator Android untuk build APK.
+- Konfigurasi Android untuk SDK Flutter tersebut: Gradle **8.10.2**, Android Gradle Plugin **8.7.0**, Kotlin **1.8.22**, Java **17**, dan NDK bawaan Flutter (**26.3.11579264**). Jangan menaikkan Gradle ke 9.x secara terpisah: plugin Flutter SDK ini masih memakai API Groovy lama.
+- Plugin memberi peringatan kebutuhan NDK **27.0.12077973**. Build debug x64 berhasil dengan NDK bawaan; instalasi NDK 27 lokal belum lengkap (`source.properties` tidak ada). Lengkapi instalasinya melalui Android SDK Manager sebelum mengganti `ndkVersion`.
 - (Opsional) Proyek Firebase dan API key Gemini untuk fitur cloud & AI.
 
 ## Menjalankan
@@ -39,12 +42,33 @@ flutter run
 2. Isi dua variabel berikut dengan kredensial milik pemilik proyek:
    ```dotenv
    GEMINI_API_KEY=<api key dari Google AI Studio>
-   GEMINI_MODEL=<model Flash yang mendukung JSON, mis. gemini-2.0-flash>
+   # Boleh berisi beberapa model dipisah koma (rotasi saat 404/429):
+   GEMINI_MODEL=gemini-3.1-flash-lite,gemini-3.8-flash,gemini-flash-latest
    ```
+   Urutan daftar adalah urutan percobaan: model pertama dipakai lebih dulu; jika
+   dicabut Google (HTTP 404) atau kuota harian habis (HTTP 429), `GeminiService`
+   otomatis lanjut ke model berikutnya dan layar analisis menampilkan status
+   perpindahannya. Kuota gratis Gemini hanya 20 request/hari/model, jadi rotasi
+   melipatgandakan jatah harian tanpa mengganti kode.
 3. **Jangan commit `.env`.** File ini sudah ada di `.gitignore`; hanya `.env.example` yang boleh masuk repo.
 4. Jalankan ulang aplikasi. Tanpa key, tombol “Analisis dengan AI” menampilkan pesan konfigurasi dan pengguna dapat memakai “Gunakan contoh hasil (tanpa AI)”.
 
-> Catatan rilis: `.env` ikut dibundel sebagai asset agar demo tertutup berjalan. Untuk APK distribusi publik, pindahkan panggilan Gemini ke backend atau Firebase AI Logic + App Check agar key tidak dapat diekstrak dari APK (lihat `PANDUAN-FIREBASE-GEMINI.md`).
+> Catatan rilis: `.env` ikut dibundel sebagai asset untuk demo tertutup. Untuk APK distribusi publik, pindahkan panggilan Gemini/OpenAI beserta API key ke backend; `.gitignore` tidak melindungi key yang sudah dibundel ke APK (lihat `PANDUAN-FIREBASE-GEMINI.md`).
+
+## API key OpenAI sebagai cadangan Gemini
+
+Isi di file **`.env` pada folder utama proyek**, sejajar `pubspec.yaml`:
+
+```dotenv
+OPENAI_API_KEY=<isi OpenAI API key Anda>
+OPENAI_MODEL=gpt-4.1-mini
+```
+
+Gunakan API key dari platform OpenAI, bukan kata sandi/token sesi ChatGPT. Setelah menyimpan, lakukan **hot restart** atau jalankan ulang aplikasi agar `.env` dimuat ulang. Contoh kosong tersedia di `.env.example`.
+
+Alur: Gemini (termasuk retry yang sudah ada) → jika gagal dan OpenAI dikonfigurasi, satu permintaan ke OpenAI Responses API → validasi hasil → simpan seperti biasa. Jika Gemini belum dikonfigurasi, OpenAI juga dapat menjadi cadangan. Tanpa key OpenAI, perilaku error Gemini tetap dipertahankan; jika kedua layanan gagal, tersedia tombol contoh offline. Batas waktu OpenAI adalah 90 detik per permintaan, sehingga fallback menambah waktu tunggu total.
+
+Persetujuan asesmen menyebut kedua penyedia. OpenAI memakai Structured Outputs dan `store: false`; raw body error serta API key tidak dicetak. Hasil OpenAI adalah analisis AI, bukan hasil contoh. Pengujian otomatis memakai respons tiruan; akses model dan kuota akun perlu diuji setelah key diisi. Rujukan: [OpenAI quickstart](https://developers.openai.com/api/docs/quickstart) dan [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs).
 
 ## Konfigurasi Firebase (opsional untuk mode lokal)
 
@@ -72,9 +96,9 @@ Jika Firebase belum siap, aplikasi otomatis memakai penyimpanan lokal (`shared_p
 flutter build apk --release
 ```
 
-APK dihasilkan di `build/app/outputs/flutter-apk/app-release.apk`. Untuk build saat ini, `google-services.json` **wajib** ada karena plugin Google Services aktif.
+APK rilis dihasilkan di `build/app/outputs/flutter-apk/app-release.apk`. Plugin Google Services saat ini dinonaktifkan di `android/app/build.gradle.kts`; aplikasi menginisialisasi Firebase memakai `DefaultFirebaseOptions.currentPlatform` dari `lib/firebase_options.dart`.
 
-> **Status build (2026-11-14): TERHAMBAT.** `flutter build apk --release` gagal dengan `File google-services.json is missing`. Jalankan `flutterfire configure --project=careerpath-e3adb --platforms=android` di mesin build (file hasilnya tidak di-commit), lalu ulangi build. Setelah itu masih ada pekerjaan rilis: `lib/main.dart` harus memakai `Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)` dan nama aplikasi/`applicationId` masih default (`flutter_application_1` / `com.example.flutter_application_1`). Detail: [`HASIL-KERJA.md`](HASIL-KERJA.md#l-10).
+> Build rilis belum diverifikasi ulang setelah bug fixing. Nama aplikasi/`applicationId` masih default (`flutter_application_1` / `com.example.flutter_application_1`), dan signing rilis masih menggunakan debug key. Inisialisasi Firebase di `main.dart` sudah dipulihkan. Lihat hasil terbaru di [`HASIL-KERJA.md`](HASIL-KERJA.md#bug-fixing-habib--2026-11-14).
 
 ## Uji
 
@@ -82,11 +106,16 @@ APK dihasilkan di `build/app/outputs/flutter-apk/app-release.apk`. Untuk build s
 flutter analyze
 flutter test
 dart run tool/qa_live_gemini.dart   # butuh .env + akses ke endpoint Gemini
+dart run tool/qa_live_openai.dart    # uji live cadangan OpenAI (butuh kredit akun)
 ```
 
-> Jika `flutter test` menggantung saat mengambil dependensi (jaringan pub.dev lambat), jalankan `flutter test --no-pub` setelah `flutter pub get` pernah berhasil. Di lingkungan QA, perintah inilah yang menghasilkan 27/27 lulus.
+> Jika `flutter test` menggantung saat mengambil dependensi (jaringan pub.dev lambat), jalankan `flutter test --concurrency=1 --no-pub` setelah `flutter pub get` pernah berhasil. Pemeriksaan terbaru menghasilkan 112/112 tes lulus.
+
+> **Timeout Gemini:** aplikasi menunggu maksimal 90 detik per permintaan. HTTP 503 memicu satu retry setelah jeda 2 detik untuk seluruh analisis; timeout dan HTTP 429 tidak diulang otomatis. Uji live terbaru pada `gemini-flash-latest` menerima HTTP 503 setelah 49,4 detik (model sedang menerima permintaan tinggi). Retry tidak menjamin layanan sudah pulih; contoh offline tetap tersedia.
 
 > **Diagnosa uji AI live (2026-11-14):** endpoint Gemini kini **terjangkau** (discovery HTTP 200), tetapi panggilan `generateContent` berakhir **HTTP 429 — kuota/limit API key habis**, didahului 503/timeout. Ganti key atau tambah kuota pemilik, lalu jalankan ulang alat QA. Alat otomatis berhenti setelah 429 agar tidak menunggu lama; 503 berarti layanan Gemini sedang sibuk (coba lagi nanti).
+
+> **Rotasi model (2026-11-14):** `GEMINI_MODEL` kini menerima daftar model dipisah koma. Model lama `gemini-2.5-flash` sudah dicabut Google (404) dan model utama kehabisan kuota harian free tier (429, 20 request/hari/model), sehingga analisis langsung gagal. `GeminiService` mencoba daftar model berurutan saat 404/429 (callback `onModelSwitch` mengabarkan ke layar); error lain (401, timeout, 503) tidak dirotasi. QA live terbaru: **5/5 skenario LULUS** pada `gemini-3.1-flash-lite` dengan `responseSchema` aktif (latensi 2,5–30,5 detik).
 
 Artefak QA (dimiliki peran D):
 
@@ -96,16 +125,17 @@ Artefak QA (dimiliki peran D):
 | `test/qa_validators_test.dart` | Katalog 8/8/6, kontrak JSON hasil AI, penolakan respons tidak valid |
 | `test/qa_local_store_provider_test.dart` | Simpan/muat profil & riwayat lokal, reset asesmen, skenario batas skill 1/5 |
 | `test/qa_flow_test.dart` | Alur end-to-end lokal: profil → 8 minat → 6 skill → persetujuan → hasil contoh → detail → riwayat → ulangi |
-| `tool/qa_live_gemini.dart` | Menjalankan 5 skenario AI live terhadap Gemini; mencetak skor/karier/durasi tanpa key atau respons mentah. Opsi: `--only=1..5`, `--timeout=90`; berhenti otomatis dengan pesan jelas saat kuota habis (429) atau layanan sibuk (503) |
+| `tool/qa_live_gemini.dart` | Menjalankan 5 skenario AI live terhadap Gemini; mencetak skor/karier/durasi tanpa key atau respons mentah. Opsi: `--only=1..5`, `--timeout=90`, `--model=<nama>`; memahami daftar `GEMINI_MODEL` dan berpindah model otomatis saat 404/429; berhenti dengan pesan jelas saat kuota semua model habis (429) atau layanan sibuk (503) |
 
 ### Status QA terbaru (2026-11-14)
 
 | Pemeriksaan | Hasil |
 | --- | --- |
-| `flutter analyze` | LULUS: 0 error, 0 warning; 25 info (deprecation `material.dart` + `avoid_print` hanya di `tool/`) |
-| `flutter test` | **LULUS 27/27** (widget, validator, local store/provider, alur lokal) |
-| 5 skenario AI live | **BELUM LULUS**: endpoint sudah terjangkau, tetapi panggilan berakhir **HTTP 429 kuota habis** (didahului 503/timeout); ulangi setelah key/kuota diperbarui |
-| Build APK rilis | **GAGAL**: `google-services.json` tidak ada; APK belum dihasilkan |
+| `flutter analyze --no-pub` | **LULUS: No issues found** |
+| `flutter test --concurrency=1 --no-pub` | **LULUS 112/112**, termasuk Career Journey, alur lokal, regresi timeout/retry Gemini, dan rotasi model |
+| 5 skenario AI live | **LULUS 5/5** pada `gemini-3.1-flash-lite` (2026-11-14, rotasi aktif, `responseSchema` diterima); latensi 2,5–30,5 detik |
+| Build APK rilis | **BELUM DIUJI ULANG** setelah bug fixing; status lama tidak mewakili konfigurasi saat ini |
+| Build APK debug emulator x64 | **LULUS** setelah menyelaraskan versi toolchain Android; APK: `build/app/outputs/flutter-apk/app-debug.apk` |
 | Uji HP (login, offline, layar kecil, tekan ganda) | **BELUM**: menunggu perangkat & akses Firebase |
 | Keamanan repo | LULUS: `.env` ignored & tidak pernah ter-commit, nilai key tidak ada di file tracked, izin `INTERNET` ada |
 
@@ -116,10 +146,10 @@ Hasil uji terbaru, bug log + PIC, dan sisa pekerjaan dicatat di [`HASIL-KERJA.md
 ```text
 lib/
   data/       katalog 8 karier, 8 pertanyaan minat, 6 skill, hasil contoh
-  models/     CareerResult, UserProfile, AssessmentRecord
-  providers/  AssessmentProvider (state asesmen)
+  models/     CareerResult, UserProfile, AssessmentRecord, CareerJourney
+  providers/  AssessmentProvider (asesmen), JourneyProvider (roadmap aktif)
   screens/    welcome, auth, profile, interest, skill, summary, analyzing, result, detail, home
-  services/   gemini_service, app_backend (Firebase/lokal), local_store
+  services/   gemini_service (rotasi model), openai_service, career_analysis_service (fallback), app_backend (Firebase/lokal), local_store
   utils/      tema, konstanta copy, validators
   widgets/    progress_header, career_card
 test/         uji widget, validator, penyimpanan, dan alur QA
@@ -134,6 +164,7 @@ tool/         alat QA manual (5 skenario AI live: qa_live_gemini.dart)
 | B | Lutfi | Firebase, auth, data & penyimpanan |
 | C | Faji | Gemini, prompt, validasi & fallback |
 | D | Sabrina | QA, dokumentasi, pitch & rilis |
+| E | Habib | Bug fixing, stabilitas alur/data, dan tes regresi |
 
 ## Dokumen
 

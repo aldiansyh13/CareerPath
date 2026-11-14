@@ -247,3 +247,76 @@ Tambahkan entri di bawah judul ID terkait. Buat judul stabil seperti `## L-02` s
 - Kendala, tindakan perbaikan dan yang tersisa: 1/12 panggilan live melanggar kontrak roadmap setelah retry; schema sudah diperketat tetapi belum diverifikasi ulang karena kuota 429 dan jaringan IPv6 labil. Latensi live 14-20 detik (belum konsisten <15 detik). Widget test lama gagal; tidak diubah karena di luar scope AI.
 - Gerbang blok dan butir To-Do yang diperbarui: Butir Should "Roadmap 4 minggu dibuat lebih konkret di prompt" dan "Fallback: tampilkan hasil contoh dengan label jelas" dicentang (fallback sudah ada, tervalidasi test, label tampil di `result_screen.dart`). Butir Must kualitas AI 10 panggilan & 5 skenario tetap terbuka.
 - Tindakan berikut, lokasi mulai dan tanda berhasil: Setelah kuota/jaringan stabil, jalankan 5 skenario QA + 10 panggilan; mulai dari `lib/services/gemini_service.dart` (prompt/schema) bila perlu penyetelan. Berhasil bila semua skenario menghasilkan 3 karier relevan, skor bervariasi, alasan personal, roadmap konkret, dan tidak ada crash offline.
+
+## Bug Fixing Habib — 2026-11-14
+
+- PIC: Habib (Bug Fixing), berkoordinasi dengan pemilik fitur dan Sabrina untuk QA.
+- Akar masalah utama: `lib/main.dart` berisi template counter dengan impor `material_ui` yang tidak tersedia, sintaks yang tidak didukung SDK lokal, dan tidak memiliki `CareerPathApp` yang diperlukan tes.
+- Perbaikan: memulihkan startup CareerPath, tema/provider, pemuatan `.env`, Firebase dengan opsi platform, serta pemulihan profil lokal/cloud.
+- Keandalan: kegagalan simpan profil ditampilkan dan tidak melanjutkan navigasi; hasil `false` dari penyimpanan lokal dianggap gagal; pembaruan layar auth/analisis/beranda memeriksa lifecycle; ulang asesmen dari beranda mengosongkan jawaban; label contoh di riwayat tidak lagi terpotong oleh format tanggal.
+- Riwayat: data lokal digabung dengan cloud dan diurutkan, menggunakan ID yang sama untuk penyimpanan baru di lokal/cloud. Cache baru saat login dipisahkan per UID. Riwayat tamu tetap data perangkat dan tidak otomatis diunggah ke akun.
+- Kompatibilitas data lama: cache lama yang tidak memiliki UID tetap diperlakukan sebagai data perangkat. ID lokal/cloud lama yang berbeda tidak dideduplikasi secara spekulatif. Sinkronisasi otomatis untuk hasil yang dahulu gagal diunggah belum ditambahkan; hasil lokal tetap dapat dibaca.
+- Tes regresi: `test/bugfix_regression_test.dart` memeriksa penggabungan/deduplikasi riwayat, isolasi cache akun, gagal simpan profil, login gagal setelah layar ditutup, ulang asesmen dan label contoh. Finder tes persetujuan diperbaiki agar mengenali subclass `FilledButton.icon`.
+- Verifikasi: `flutter analyze --no-pub` → LULUS, No issues found; `flutter test --no-pub` → LULUS 71/71.
+- Lingkungan verifikasi: Flutter 3.29.3 / Dart 3.7.2. Tidak ada dependency baru. `avoid_print` dikecualikan hanya pada CLI QA yang memang memakai stdout.
+- Dokumentasi: Habib ditambahkan sebagai Orang 5 (Bug Fixing) di `PEMBAGIAN-TUGAS-TIM.md` dan tabel tim README.
+- Belum diverifikasi pada sesi ini: layanan Firebase/Gemini asli, pengujian akun A/B pada perangkat, dan APK rilis. Tes Gemini memakai respons tiruan; tes cache bukan bukti uji Firestore Rules.
+
+- Build Android: percobaan `flutter build apk --debug --no-pub` belum menghasilkan APK terverifikasi; proses dihentikan setelah menunggu pada `Running Gradle task 'assembleDebug'` tanpa hasil akhir. Bukan bukti build berhasil maupun diagnosis error Gradle. Ulangi build dengan log verbose untuk diagnosis native build.
+
+## Perbaikan build Android — Habib — 2026-11-14
+
+- Gejala: `:gradle:compileGroovy` gagal karena `groovy.xml.QName` tidak ditemukan di plugin Gradle Flutter.
+- Akar masalah: proyek memakai Gradle 9.5.0 (Groovy 4), AGP 9.3.1, dan Kotlin 2.4.20, sedangkan SDK lokal Flutter 3.29.3 menetapkan template Gradle 8.10.2, AGP 8.7.0, dan Kotlin 1.8.22. Java yang terdeteksi adalah 17.0.11.
+- Perbaikan: sesuaikan ketiga versi, gunakan `android.kotlinOptions` untuk target JVM 17, hapus flag AGP 9 dan suppression deprecation yang tidak lagi diperlukan. Tidak mengubah instalasi Flutter global.
+- Bukti: `flutter build apk --debug --no-pub --target-platform android-x64` berhasil menghasilkan `build/app/outputs/flutter-apk/app-debug.apk` dalam 297,2 detik pada percobaan pertama setelah perbaikan toolchain.
+- Kendala terpisah: plugin memberi peringatan kebutuhan NDK 27.0.12077973. Percobaan memakai versi tersebut gagal CXX1101 karena instalasi lokal hanya parsial dan tidak memiliki `source.properties`. Konfigurasi akhir kembali memakai NDK bawaan Flutter 26.3.11579264 yang berhasil membangun debug x64. Instalasi NDK 27 harus dilengkapi melalui SDK Manager sebelum mengganti versi.
+- Batas verifikasi: build debug x64, belum instalasi/peluncuran aplikasi pada emulator atau APK rilis. Catatan penghentian build di laporan sebelumnya sudah digantikan oleh keberhasilan build pada sesi ini.
+- Rujukan perubahan Groovy Gradle 9: https://docs.gradle.org/current/userguide/upgrading_major_version_9.html
+
+## Timeout Gemini — Habib — 2026-11-14
+
+- Gejala pengguna: permintaan analisis berhenti setelah batas 40 detik.
+- Bukti live: `dart run tool/qa_live_gemini.dart --only=1 --timeout=90`, data sintetis, model `gemini-flash-latest`, menerima HTTP 503 dalam 49.430 ms. Pesan server: model mengalami permintaan tinggi. Uji CLI memakai prompt QA, bukan request persis dari emulator; timeout emulator tidak membuktikan bahwa semua kegagalan disebabkan server yang sama.
+- Perbaikan: timeout default service 90 detik per request; satu retry HTTP 503 setelah jeda 2 detik untuk seluruh analisis; callback status retry pada layar; pesan timeout menyebut kemungkinan server sibuk/koneksi lambat dan opsi contoh offline. Timeout dan 429 tidak diulang otomatis. Retry validasi JSON/schema yang sudah ada tetap berlaku sehingga total alur dapat lebih lama dari 90 detik.
+- Bukti regresi: tiga tes baru gagal sebelum patch (40 vs 90 detik, 503 tidak diulang), lalu seluruh 74 tes lulus setelah patch. Tes juga memastikan timeout dan 429 hanya mengirim satu permintaan.
+- Batas verifikasi: ketahanan client telah diuji, tetapi keberhasilan analisis live setelah patch belum terbukti; kapasitas Gemini berada di luar kendali aplikasi. Tidak mengubah API key/model dan tidak mencetak kredensial. Lakukan hot restart atau jalankan ulang aplikasi untuk memakai perubahan.
+- Rujukan retry terbatas dan backoff: https://ai.google.dev/gemini-api/docs/troubleshooting
+
+## Fallback OpenAI — Habib — 2026-11-14
+
+- PIC: Habib (Bug Fixing), berkoordinasi dengan pemilik fitur untuk API key dan QA.
+- Gejala: permintaan Gemini melebihi batas waktu; analisis butuh opsi kedua agar pengguna tidak langsung mentok ke contoh offline.
+- Perbaikan: `lib/services/openai_service.dart` (baru) memanggil OpenAI Responses API (`/v1/responses`, `store: false`, Structured Outputs `json_schema` strict, timeout 90 detik) dan memakai `validateAndParseResult` yang sama dengan Gemini. `lib/services/career_analysis_service.dart` (baru) mengatur urutan: Gemini → jika gagal dikenal (404/429/timeout/validasi) dan OpenAI dikonfigurasi, satu permintaan OpenAI → jika kedua gagal, pesan jelas + opsi contoh. Layar analisis menampilkan status "Menganalisis dengan OpenAI..."; teks persetujuan di ringkasan menyebut kedua penyedia.
+- Konfigurasi: `OPENAI_API_KEY`/`OPENAI_MODEL` di `.env` (contoh di `.env.example`, dokumentasi di README). Error 401/403/429/400/404 dipetakan ke pesan Indonesia tanpa mencetak body mentah atau key.
+- Bukti: `test/ai_fallback_test.dart` (15 tes: sukses Gemini tanpa panggilan OpenAI, rotasi ke OpenAI saat Gemini gagal, key OpenAI kosong → error Gemini dipertahankan, kedua gagal → `AnalysisException` jelas, klik ganda/layar tutup aman, URL/header/body benar, error HTTP tersanitasi, respons refusal/tidak lengkap ditolak). Total `flutter test --no-pub` LULUS 97/97; `flutter analyze --no-pub` LULUS.
+- Verifikasi live: `dart run tool/qa_live_openai.dart` (baru, klien REST mandiri tanpa paket Flutter) mengirim 1 skenario sintetis dan menerima **HTTP 429 "You have no credits remaining"** — endpoint, auth, dan pemetaan error terbukti bekerja, tetapi **akun OpenAI kehabisan kredit** sehingga fallback live belum terbukti menghasilkan analisis.
+- Batas verifikasi: butuh pengisian kredit di platform OpenAI (aksi pemilik, browser) lalu ulangi `dart run tool/qa_live_openai.dart`. Belum diuji di HP/emulator end-to-end. Perubahan belum di-commit.
+
+## Rotasi model Gemini (404/429) — Habib — 2026-11-14
+
+- Gejala pengguna: analisis langsung gagal dalam hitungan detik (bukan timeout).
+- Diagnosis live bertumpuk: (1) `GEMINI_MODEL=gemini-2.5-flash` sudah dicabut Google → HTTP 404 `NOT_FOUND: This model is no longer available to new users` (server menyarankan `gemini-3.8-flash`); (2) model utama (`gemini-3.8-flash`, `gemini-3.6-flash`, `gemini-flash-latest`) kena HTTP 429 `GenerateRequestsPerDayPerProjectPerModel-FreeTier` — kuota gratis hanya **20 request/hari/model**, sisa tunggu ±15 jam; (3) `gemini-3.1-flash-lite` terbukti masih hidup (probe OK 1,4 detik) dan menerima `responseSchema` (probe 17,4 detik, JSON valid).
+- Perbaikan: `.env` kini `GEMINI_MODEL=gemini-3.1-flash-lite,gemini-3.8-flash,gemini-flash-latest`. `GeminiService` memparse daftar dipisah koma (spasi/entri kosong dibuang) dan mencoba berurutan saat **404/429 saja** (`_ModelUnavailableException`); error lain (401, timeout, 503) tidak dirotasi agar perilaku lama tetap. Callback `onModelSwitch` mengabarkan layar "Model Gemini (X) tidak tersedia. Mencoba model cadangan Y...". Jika semua model gagal, pesan "Semua N model Gemini yang dikonfigurasi gagal" + detail terakhir. Retry 503 tetap berlaku per model. `tool/qa_live_gemini.dart` memahami daftar model dan mendukung `--model=`; tool berhenti dengan pesan jelas saat kuota semua model habis.
+- Bukti: 9 tes rotasi baru di `test/gemini_service_test.dart` (rotasi 404→sukses, 429→model ketiga, semua gagal→pesan jelas, model tunggal tetap 1 permintaan, 401 tidak dirotasi, parsing spasi/kosong, retry 503 setelah rotasi, daftar hanya pemisah→belum dikonfigurasi). `flutter analyze --no-pub` LULUS; `flutter test --no-pub` **LULUS 97/97**. QA live: `dart run tool/qa_live_gemini.dart --timeout=90` → **LULUS 5/5 skenario** pada `gemini-3.1-flash-lite` (skor unik 3/3, roadmap 4 minggu, alasan personal, semua dari katalog; latensi 2,5–30,5 detik).
+- Batas verifikasi: hari ini hanya model lite yang sisa kuotanya; model lain 429 sampai reset harian. Kuota 20/hari/model kecil untuk demo — keputusan aktifkan Billing AI Studio (berbayar) atau key/project baru ada di pemilik. Belum diuji di HP/emulator; perubahan belum di-commit.
+- Rujukan batas kuota: https://aistudio.google.com/docs/rate-limits
+
+## Career Journey Hackathon Slice — 2026-11-15
+
+- Tujuan: mengubah hasil asesmen dari layar akhir menjadi langkah yang dapat dilanjutkan, dengan scope sengaja dibatasi pada fitur paling kuat untuk demo hackathon.
+- Flow baru: pengguna memilih `Jadikan fokus` pada salah satu dari tiga rekomendasi → aplikasi membuka Beranda → hero `JALUR AKTIF` menampilkan karier, skor cocok, progress, minggu aktif, dan next action → pengguna menandai langkah selesai atau membuka roadmap lengkap.
+- Roadmap interaktif: seluruh aksi empat minggu menjadi checklist, progress dihitung dari aksi yang selesai, active week adalah minggu pertama yang belum selesai, dan snackbar `Urungkan` mengembalikan toggle terakhir.
+- Persistensi: satu `CareerJourney` aktif disimpan di SharedPreferences dengan snapshot lengkap rekomendasi. Key tamu dan key per-UID dipisah; saat login/logout, `JourneyProvider` berpindah namespace dan memuat journey yang sesuai. Progress journey belum disinkronkan ke Firestore.
+- Tampilan: arah ringan `Apprenticeship Logbook` memakai primary hijau tinta, background warm ivory, label status yang tegas, progress bar, dan cards tonal Material 3. Tidak ada aset raster atau dependency baru.
+- File inti baru: `lib/models/career_journey.dart`, `lib/providers/journey_provider.dart`, `test/career_journey_test.dart`, `test/journey_store_provider_test.dart`, `test/journey_flow_test.dart`, dan `test/journey_home_test.dart`.
+- File inti diubah: `lib/main.dart`, `lib/services/local_store.dart`, `lib/screens/home_screen.dart`, `lib/screens/result_screen.dart`, `lib/screens/career_detail_screen.dart`, `lib/screens/auth_screen.dart`, `lib/widgets/career_card.dart`, `lib/utils/constants.dart`, dan `lib/utils/app_theme.dart`.
+- Bukti TDD: tes baru lebih dulu gagal karena model/API/UI belum ada; setelah implementasi, 6 tes model, 6 tes store/provider, 2 tes flow, dan 1 tes journey home lulus. Bug snackbar yang sempat menampilkan persentase lama juga dibuktikan RED lalu diperbaiki GREEN.
+- Verifikasi akhir agent:
+  - `dart format lib test` → LULUS.
+  - `flutter analyze --no-pub` → LULUS, `No issues found`.
+  - `flutter test --concurrency=1 --no-pub` → LULUS **112/112**.
+  - Small-screen suite 320×568 tetap lulus tanpa overflow.
+- Belum diverifikasi: screenshot emulator/perangkat, gesture Android di HP, Firebase login A/B nyata, dan build APK setelah perubahan ini. `flutter devices` tidak menghasilkan perangkat yang dapat dipakai pada sesi ini.
+- Sengaja ditunda setelah hackathon: skill check-in 1–5, grafik perkembangan skill, multi-journey archive, sinkronisasi progress ke Firestore, notifikasi, gamifikasi, dan AI mentor.
+- Dokumen keputusan: `PRODUCT.md`, `docs/superpowers/specs/2026-11-15-career-journey-hackathon-design.md`, dan `docs/superpowers/plans/2026-11-15-career-journey.md`.

@@ -32,12 +32,27 @@ http.Response successResponse(Object result) {
   );
 }
 
-GeminiService serviceWith(http.Client client, {Duration? timeout}) {
+GeminiService serviceWith(
+  http.Client client, {
+  Duration? timeout,
+  String model = 'test-model',
+  void Function(String from, String to)? onModelSwitch,
+}) {
   return GeminiService(
     client: client,
     apiKey: 'test-key',
-    model: 'test-model',
+    model: model,
     timeout: timeout,
+    onModelSwitch: onModelSwitch,
+  );
+}
+
+http.Response errorResponse(int status, [String message = 'error']) {
+  return http.Response(
+    jsonEncode({
+      'error': {'message': message}
+    }),
+    status,
   );
 }
 
@@ -53,6 +68,34 @@ Matcher throwsGemini(String fragment) {
 
 void main() {
   group('GeminiService.analyzeCareer', () {
+    test('memberi waktu 90 detik untuk respons model yang lambat', () {
+      expect(GeminiService.defaultTimeout, const Duration(seconds: 90));
+    });
+
+    test('mencoba ulang sekali saat server sibuk 503 lalu berhasil', () async {
+      var calls = 0;
+      final client = MockClient((_) async {
+        calls++;
+        return calls == 1
+            ? http.Response('{}', 503)
+            : successResponse(sampleJson());
+      });
+      final result = await serviceWith(client).analyzeCareer(kSampleInput);
+      expect(result.careers, hasLength(3));
+      expect(calls, 2);
+    });
+
+    test('berhenti setelah satu retry ketika server tetap sibuk', () async {
+      var calls = 0;
+      final client = MockClient((_) async {
+        calls++;
+        return http.Response('{}', 503);
+      });
+      await expectLater(
+          serviceWith(client).analyzeCareer(kSampleInput), throwsGemini('503'));
+      expect(calls, 2);
+    });
+
     test('mem-parse respons valid menjadi CareerResult', () async {
       late http.Request captured;
       final client = MockClient((request) async {
@@ -156,7 +199,9 @@ void main() {
     });
 
     test('memetakan kuota 429 ke pesan Indonesia', () async {
+      var calls = 0;
       final client = MockClient((_) async {
+        calls++;
         return http.Response(
           jsonEncode({
             'error': {'message': 'Quota exceeded'}
@@ -169,6 +214,7 @@ void main() {
         serviceWith(client).analyzeCareer(kSampleInput),
         throwsGemini('Kuota'),
       );
+      expect(calls, 1);
     });
 
     test('memetakan API key tidak valid (401)', () async {
@@ -255,7 +301,9 @@ void main() {
     });
 
     test('mengubah timeout menjadi pesan yang dapat dipahami', () async {
+      var calls = 0;
       final client = MockClient((_) async {
+        calls++;
         await Future<void>.delayed(const Duration(milliseconds: 200));
         return successResponse(sampleJson());
       });
@@ -268,6 +316,7 @@ void main() {
         service.analyzeCareer(kSampleInput),
         throwsGemini('batas waktu'),
       );
+      expect(calls, 1);
     });
 
     test('mencoba ulang tanpa responseSchema bila API menolak schema',
@@ -295,6 +344,156 @@ void main() {
       expect(bodies.first, contains('responseSchema'));
       expect(bodies.last, isNot(contains('responseSchema')));
       expect(bodies.last, contains('responseMimeType'));
+    });
+  });
+
+  group('GeminiService rotasi model', () {
+    test('lanjut ke model berikutnya saat 404 lalu berhasil', () async {
+      final urls = <String>[];
+      final switches = <String>[];
+      final client = MockClient((request) async {
+        urls.add(request.url.toString());
+        if (urls.length == 1) {
+          return errorResponse(404, 'model is no longer available');
+        }
+        return successResponse(sampleJson());
+      });
+
+      final result = await serviceWith(
+        client,
+        model: 'model-a, model-b',
+        onModelSwitch: (from, to) => switches.add('$from>$to'),
+      ).analyzeCareer(kSampleInput);
+
+      expect(result.careers, hasLength(3));
+      expect(urls, hasLength(2));
+      expect(urls[0], contains('model-a:generateContent'));
+      expect(urls[1], contains('model-b:generateContent'));
+      expect(switches, ['model-a>model-b']);
+    });
+
+    test('melewati dua model berkuota habis (429) menuju model ketiga',
+        () async {
+      var calls = 0;
+      final switches = <String>[];
+      final client = MockClient((_) async {
+        calls++;
+        return calls < 3
+            ? errorResponse(429, 'Quota exceeded')
+            : successResponse(sampleJson());
+      });
+
+      final result = await serviceWith(
+        client,
+        model: 'm1,m2,m3',
+        onModelSwitch: (from, to) => switches.add('$from>$to'),
+      ).analyzeCareer(kSampleInput);
+
+      expect(result.careers, hasLength(3));
+      expect(calls, 3);
+      expect(switches, ['m1>m2', 'm2>m3']);
+    });
+
+    test('gagal dengan jelas ketika semua model habis', () async {
+      final client =
+          MockClient((_) async => errorResponse(429, 'Quota exceeded'));
+
+      await expectLater(
+        serviceWith(client, model: 'm1,m2').analyzeCareer(kSampleInput),
+        throwsA(isA<GeminiException>().having(
+          (e) => e.message,
+          'message',
+          allOf(contains('Semua 2 model'), contains('Kuota')),
+        )),
+      );
+    });
+
+    test('model tunggal 404 tetap memberi pesan lama tanpa rotasi', () async {
+      var calls = 0;
+      final client = MockClient((_) async {
+        calls++;
+        return errorResponse(404, 'not found');
+      });
+
+      await expectLater(
+        serviceWith(client).analyzeCareer(kSampleInput),
+        throwsGemini('Model Gemini tidak ditemukan'),
+      );
+      expect(calls, 1);
+    });
+
+    test('tidak mengrotasi untuk error selain 404/429', () async {
+      var calls = 0;
+      final client = MockClient((_) async {
+        calls++;
+        return errorResponse(401, 'API key not valid');
+      });
+
+      await expectLater(
+        serviceWith(client, model: 'm1,m2').analyzeCareer(kSampleInput),
+        throwsGemini('API key'),
+      );
+      expect(calls, 1);
+    });
+
+    test('tidak memanggil onModelSwitch saat model pertama berhasil', () async {
+      var calls = 0;
+      var switched = false;
+      final client = MockClient((_) async {
+        calls++;
+        return successResponse(sampleJson());
+      });
+
+      await serviceWith(
+        client,
+        model: 'm1,m2',
+        onModelSwitch: (_, __) => switched = true,
+      ).analyzeCareer(kSampleInput);
+
+      expect(calls, 1);
+      expect(switched, isFalse);
+    });
+
+    test('membersihkan spasi dan entri kosong pada daftar model', () async {
+      final urls = <String>[];
+      final client = MockClient((request) async {
+        urls.add(request.url.toString());
+        if (urls.length == 1) return errorResponse(404, 'not found');
+        return successResponse(sampleJson());
+      });
+
+      await serviceWith(client, model: ' model-a , , model-b ')
+          .analyzeCareer(kSampleInput);
+
+      expect(urls, hasLength(2));
+      expect(urls[0], contains('model-a:generateContent'));
+      expect(urls[1], contains('model-b:generateContent'));
+    });
+
+    test('retry 503 tetap berlaku pada model hasil rotasi', () async {
+      final switches = <String>[];
+      var calls = 0;
+      final client = MockClient((_) async {
+        calls++;
+        if (calls == 1) return errorResponse(404, 'not found');
+        if (calls == 2) return http.Response('{}', 503);
+        return successResponse(sampleJson());
+      });
+
+      final result = await serviceWith(
+        client,
+        model: 'm1,m2',
+        onModelSwitch: (from, to) => switches.add('$from>$to'),
+      ).analyzeCareer(kSampleInput);
+
+      expect(result.careers, hasLength(3));
+      expect(calls, 3);
+      expect(switches, ['m1>m2']);
+    });
+
+    test('daftar model yang hanya pemisah dianggap belum dikonfigurasi', () {
+      final service = GeminiService(apiKey: 'key', model: ' , ');
+      expect(service.isConfigured, isFalse);
     });
   });
 }

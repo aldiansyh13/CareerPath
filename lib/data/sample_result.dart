@@ -10,7 +10,11 @@ const Map<String, dynamic> kSampleResult = {
       'reason':
           'Jawabanmu menunjukkan ketertarikan pada tampilan yang mudah dipakai dan peran membuat desain visual. Skill desain dan komunikasi yang kamu nilai tinggi mendukung pekerjaan riset pengguna dan pembuatan prototipe.',
       'skills_owned': ['Desain visual', 'Komunikasi', 'Empati pengguna'],
-      'skills_missing': ['User research terstruktur', 'Prototyping Figma', 'Usability testing'],
+      'skills_missing': [
+        'User research terstruktur',
+        'Prototyping Figma',
+        'Usability testing'
+      ],
       'roadmap': [
         {
           'week': 1,
@@ -52,7 +56,11 @@ const Map<String, dynamic> kSampleResult = {
       'reason':
           'Minatmu pada pembuatan fitur yang terlihat oleh pengguna dan kemauan belajar hal teknis selaras dengan peran frontend. Dengan latihan logika dan pemrograman dasar, kamu bisa mulai membangun antarmuka aplikasi.',
       'skills_owned': ['Kreativitas visual', 'Ketelitian', 'Kemauan belajar'],
-      'skills_missing': ['HTML/CSS/JavaScript atau Flutter widget', 'Git dasar', 'Debugging'],
+      'skills_missing': [
+        'HTML/CSS/JavaScript atau Flutter widget',
+        'Git dasar',
+        'Debugging'
+      ],
       'roadmap': [
         {
           'week': 1,
@@ -94,7 +102,11 @@ const Map<String, dynamic> kSampleResult = {
       'reason':
           'Kamu menunjukkan minat mengatur rencana dan memahami kebutuhan pengguna/bisnis. Kemampuan komunikasi dan kolaborasi menjadi modal untuk menjembatani tim dan menyusun prioritas.',
       'skills_owned': ['Komunikasi', 'Kolaborasi', 'Orientasi tujuan'],
-      'skills_missing': ['Prioritisasi (impact/effort)', 'Penulisan requirement', 'Metrik produk dasar'],
+      'skills_missing': [
+        'Prioritisasi (impact/effort)',
+        'Penulisan requirement',
+        'Metrik produk dasar'
+      ],
       'roadmap': [
         {
           'week': 1,
@@ -135,7 +147,11 @@ const Map<String, dynamic> kSampleResult = {
 
 /// Input contoh (untuk mode demo / jelajah contoh).
 const Map<String, dynamic> kSampleInput = {
-  'profile': {'name': 'Contoh Pengguna', 'major': 'Sistem Informasi', 'semester': 4},
+  'profile': {
+    'name': 'Contoh Pengguna',
+    'major': 'Sistem Informasi',
+    'semester': 4
+  },
   'interests': {
     'q1': 'Merancang tampilan yang mudah dipakai',
     'q2': 'Membuat desain atau presentasi visual',

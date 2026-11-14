@@ -15,7 +15,9 @@ AssessmentRecord _record(String id, DateTime createdAt) {
   return AssessmentRecord(
     id: id,
     createdAt: createdAt,
-    input: <String, dynamic>{'profile': <String, dynamic>{'name': 'Uji'}},
+    input: <String, dynamic>{
+      'profile': <String, dynamic>{'name': 'Uji'}
+    },
     result: result,
   );
 }
@@ -31,7 +33,8 @@ void main() {
       expect(await store.getProfile(), isNull);
 
       await store.saveProfile(
-        const UserProfile(name: 'Sabrina', major: 'Sistem Informasi', semester: 4),
+        const UserProfile(
+            name: 'Sabrina', major: 'Sistem Informasi', semester: 4),
       );
       final loaded = await store.getProfile();
       expect(loaded, isNotNull);
@@ -100,7 +103,8 @@ void main() {
       expect((provider.buildInput()['skills'] as Map).length, 6);
     });
 
-    test('resetAssessment default menyimpan profil, opsi false menghapusnya', () {
+    test('resetAssessment default menyimpan profil, opsi false menghapusnya',
+        () {
       final provider = AssessmentProvider();
       provider.setProfile(
         const UserProfile(name: 'Uji', major: 'DKV', semester: 3),
@@ -124,14 +128,20 @@ void main() {
       expect(provider.profile?.name, 'Contoh Pengguna');
       expect(provider.interestsComplete, isTrue);
       expect(provider.skillsComplete, isTrue);
-      expect(provider.skillRatings.values.every((v) => v >= 1 && v <= 5), isTrue);
+      expect(
+          provider.skillRatings.values.every((v) => v >= 1 && v <= 5), isTrue);
     });
 
-    test('skenario batas: semua skill 1 dan semua skill 5 tersimpan apa adanya', () {
+    test('skenario batas: semua skill 1 dan semua skill 5 tersimpan apa adanya',
+        () {
       final provider = AssessmentProvider();
 
       provider.loadSampleInput(<String, dynamic>{
-        'profile': <String, dynamic>{'name': 'Uji', 'major': 'X', 'semester': 1},
+        'profile': <String, dynamic>{
+          'name': 'Uji',
+          'major': 'X',
+          'semester': 1
+        },
         'interests': <String, dynamic>{'q1': 'A'},
         'skills': <String, dynamic>{
           'logic': 1,

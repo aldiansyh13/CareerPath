@@ -3,7 +3,8 @@ class UserProfile {
   final String major;
   final int semester;
 
-  const UserProfile({required this.name, required this.major, required this.semester});
+  const UserProfile(
+      {required this.name, required this.major, required this.semester});
 
   Map<String, dynamic> toJson() => {
         'name': name,

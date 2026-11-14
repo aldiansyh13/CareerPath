@@ -142,7 +142,11 @@ void main() {
     await tester.pumpAndSettle();
 
     FilledButton analyzeButton() => tester.widget<FilledButton>(
-          find.widgetWithText(FilledButton, 'Analisis dengan AI'),
+          find.ancestor(
+            of: find.text('Analisis dengan AI'),
+            matching:
+                find.byWidgetPredicate((widget) => widget is FilledButton),
+          ),
         );
 
     await _scrollTo(tester, find.text('Analisis dengan AI'));
@@ -176,7 +180,8 @@ void main() {
     expect(find.textContaining('Contoh hasil (offline)'), findsOneWidget);
   });
 
-  testWidgets('Ulangi asesmen mengosongkan jawaban lama', (WidgetTester tester) async {
+  testWidgets('Ulangi asesmen mengosongkan jawaban lama',
+      (WidgetTester tester) async {
     _setupView(tester);
     await tester.pumpWidget(const CareerPathApp());
     await tester.pumpAndSettle();
