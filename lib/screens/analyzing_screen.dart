@@ -5,6 +5,7 @@ import '../data/sample_result.dart';
 import '../models/career_result.dart';
 import '../providers/assessment_provider.dart';
 import '../services/app_backend.dart';
+import '../services/career_analysis_service.dart';
 import '../services/gemini_service.dart';
 import '../services/local_store.dart';
 import '../utils/validators.dart';
@@ -54,13 +55,33 @@ class _AnalyzingScreenState extends State<AnalyzingScreen> {
             Map<String, dynamic>.from(kSampleResult),
             isSample: true);
       } else {
-        final gemini = GeminiService();
-        if (!gemini.isConfigured) {
-          throw GeminiConfigException(
-              'Gemini belum dikonfigurasi (GEMINI_API_KEY/GEMINI_MODEL kosong).');
-        }
-        result = await gemini.analyzeCareer(input);
+        final gemini = GeminiService(
+          onRetry: () {
+            if (mounted) {
+              setState(() =>
+                  _status = 'Gemini sedang sibuk. Mencoba ulang satu kali...');
+            }
+          },
+          onModelSwitch: (from, to) {
+            if (mounted) {
+              setState(() => _status =
+                  'Model Gemini ($from) tidak tersedia. Mencoba model cadangan $to...');
+            }
+          },
+        );
+        final analysis = CareerAnalysisService(
+          gemini: gemini,
+          shouldContinue: () => mounted,
+          onFallback: () {
+            if (mounted) {
+              setState(() => _status =
+                  'Gemini belum berhasil. Menganalisis dengan OpenAI...');
+            }
+          },
+        );
+        result = await analysis.analyzeCareer(input);
       }
+      if (!mounted) return;
       setState(() => _status = 'Menyimpan hasil...');
       try {
         await backend.saveAssessment(input: input, result: result);
@@ -91,7 +112,8 @@ class _AnalyzingScreenState extends State<AnalyzingScreen> {
   }
 
   String _friendlyMessage(Object error) {
-    if (error is GeminiConfigException ||
+    if (error is AnalysisException ||
+        error is GeminiConfigException ||
         error is GeminiException ||
         error is ResultValidationException) {
       return error.toString();
@@ -120,7 +142,9 @@ class _AnalyzingScreenState extends State<AnalyzingScreen> {
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.titleMedium),
                       const SizedBox(height: 8),
-                      const Text('Ini bisa memakan waktu beberapa detik.',
+                      const Text(
+                          'Respons AI dapat memerlukan hingga 90 detik per permintaan. '
+                          'Jika server sibuk, satu percobaan ulang dapat menambah waktu tunggu.',
                           textAlign: TextAlign.center),
                     ],
                   )

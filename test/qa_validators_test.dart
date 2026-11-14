@@ -141,8 +141,8 @@ void main() {
 
     test('menolak aksi roadmap kosong', () {
       final json = _validResult();
-      (((json['careers'] as List)[0] as Map)['roadmap'] as List)[0]['actions'] =
-          <String>[];
+      (((json['careers'] as List)[0] as Map)['roadmap'] as List)[0]
+          ['actions'] = <String>[];
       expectInvalid(json, 'aksi kosong');
     });
   });

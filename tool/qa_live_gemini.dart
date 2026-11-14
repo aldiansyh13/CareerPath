@@ -1,10 +1,15 @@
+// ignore_for_file: avoid_print
+// CLI QA memakai stdout untuk melaporkan hasil kepada operator.
 // Alat QA manual (peran D): menjalankan 5 skenario uji AI terhadap Gemini asli.
 // Tidak pernah mencetak API key atau isi respons mentah.
 //
 // Pakai:
 //   dart run tool/qa_live_gemini.dart
+//   dart run tool/qa_live_gemini.dart --only=1 --timeout=90
+//   dart run tool/qa_live_gemini.dart --model=gemini-3.1-flash-lite
 //
 // Membaca GEMINI_API_KEY & GEMINI_MODEL dari .env di root repo (file gitignored).
+// GEMINI_MODEL boleh berisi beberapa model dipisah koma (rotasi saat 404/429).
 // Keluar dengan kode 1 bila ada skenario yang gagal validasi/koneksi.
 
 import 'dart:convert';
@@ -124,10 +129,24 @@ Future<void> main(List<String> args) async {
   }
 
   // Opsional: `dart run tool/qa_live_gemini.dart --only=1 --timeout=90`
+// Opsional: `--model=nama-model` menimpa GEMINI_MODEL untuk satu kali jalan.
+// GEMINI_MODEL boleh berisi beberapa model dipisah koma; tool mencoba
+// berurutan saat 404/429 (pola yang sama dengan GeminiService).
   final onlyArg = _argValue(args, 'only');
   final timeoutArg = _argValue(args, 'timeout');
+  final modelArg = _argValue(args, 'model');
   final only = onlyArg == null ? null : int.tryParse(onlyArg);
   final timeout = Duration(seconds: int.tryParse(timeoutArg ?? '') ?? 45);
+  final models = (modelArg ?? model)
+      .split(',')
+      .map((entry) => entry.trim())
+      .where((entry) => entry.isNotEmpty)
+      .toList(growable: false);
+  if (models.isEmpty) {
+    stderr.writeln('GAGAL: daftar model kosong di .env atau --model.');
+    exit(2);
+  }
+  var activeIndex = 0;
 
   final scenarios = <MapEntry<String, Map<String, dynamic>>>[
     MapEntry(
@@ -209,53 +228,74 @@ Future<void> main(List<String> args) async {
   var quotaExhausted = false;
   final startedAt = DateTime.now();
 
-  print('Model: $model • katalog ${kCareerCatalog.length} karier • '
+  print('Model: ${models.join(', ')} • katalog ${kCareerCatalog.length} karier • '
       '${scenarios.length} skenario\n');
 
   for (final scenario in scenarios) {
     final scenarioNumber = int.tryParse(scenario.key.split('.').first);
     if (only != null && scenarioNumber != only) continue;
     ran++;
-    final watch = Stopwatch()..start();
+    final watch = Stopwatch();
     try {
-      final response = await client
-          .post(
-            Uri.parse(
-              'https://generativelanguage.googleapis.com/v1beta/models/'
-              '$model:generateContent',
-            ),
-            headers: {
-              'Content-Type': 'application/json',
-              'x-goog-api-key': apiKey,
-            },
-            body: jsonEncode(<String, dynamic>{
-              'systemInstruction': <String, dynamic>{
-                'parts': <Map<String, String>>[
-                  {'text': _systemPrompt},
-                ],
-              },
-              'contents': <Map<String, dynamic>>[
-                <String, dynamic>{
-                  'role': 'user',
-                  'parts': <Map<String, String>>[
-                    {'text': _prompt(scenario.value)},
-                  ],
-                },
-              ],
-              'generationConfig': <String, dynamic>{
-                'responseMimeType': 'application/json',
-                'temperature': 0.4,
-              },
-            }),
-          )
-          .timeout(timeout);
+      final payload = jsonEncode(<String, dynamic>{
+        'systemInstruction': <String, dynamic>{
+          'parts': <Map<String, String>>[
+            {'text': _systemPrompt},
+          ],
+        },
+        'contents': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'role': 'user',
+            'parts': <Map<String, String>>[
+              {'text': _prompt(scenario.value)},
+            ],
+          },
+        ],
+        'generationConfig': <String, dynamic>{
+          'responseMimeType': 'application/json',
+          'temperature': 0.4,
+        },
+      });
 
-      watch.stop();
+      // Rotasi model: saat 404 (dicabut) atau 429 (kuota harian habis),
+      // lanjut ke model berikutnya pada daftar sampai batas terakhir.
+      late http.Response response;
+      while (true) {
+        final usedModel = models[activeIndex];
+        watch.reset();
+        watch.start();
+        response = await client
+            .post(
+              Uri.parse(
+                'https://generativelanguage.googleapis.com/v1beta/models/'
+                '$usedModel:generateContent',
+              ),
+              headers: {
+                'Content-Type': 'application/json',
+                'x-goog-api-key': apiKey,
+              },
+              body: payload,
+            )
+            .timeout(timeout);
+        watch.stop();
+        final rotatable =
+            response.statusCode == 404 || response.statusCode == 429;
+        if (rotatable && activeIndex < models.length - 1) {
+          print('   $usedModel → HTTP ${response.statusCode}, '
+              'lanjut ke ${models[activeIndex + 1]}...');
+          activeIndex++;
+          continue;
+        }
+        break;
+      }
+      final usedModel = models[activeIndex];
+
       if (response.statusCode != 200) {
         failed++;
         final detail = _apiErrorDetail(response.body);
         if (response.statusCode == 429) {
-          print('GAGAL  ${scenario.key} → HTTP 429: kuota/limit API key habis '
+          print('GAGAL  ${scenario.key} → HTTP 429 ($usedModel): '
+              'kuota/limit API key habis '
               '(${watch.elapsedMilliseconds} ms)'
               '${detail.isEmpty ? '' : '\n       detail: $detail'}');
           quotaExhausted = true;
@@ -264,7 +304,7 @@ Future<void> main(List<String> args) async {
         final hint = response.statusCode == 503
             ? ' — layanan Gemini sedang sibuk, coba lagi nanti'
             : '';
-        print('GAGAL  ${scenario.key} → HTTP ${response.statusCode} '
+        print('GAGAL  ${scenario.key} → HTTP ${response.statusCode} ($usedModel) '
             '(${watch.elapsedMilliseconds} ms)$hint'
             '${detail.isEmpty ? '' : '\n       detail: $detail'}');
         continue;

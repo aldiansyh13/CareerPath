@@ -83,7 +83,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
               value: _consent,
               onChanged: (v) => setState(() => _consent = v ?? false),
               title: const Text(
-                  'Saya memahami jawaban saya akan diproses untuk analisis karier dan dapat disimpan di akun/perangkat saya.'),
+                  'Saya setuju profil dan jawaban saya dikirim ke Google Gemini untuk analisis karier, serta ke OpenAI sebagai cadangan jika Gemini gagal dan cadangan tersedia. Hasil dapat disimpan di akun/perangkat saya.'),
               controlAffinity: ListTileControlAffinity.leading,
             ),
             const SizedBox(height: 8),

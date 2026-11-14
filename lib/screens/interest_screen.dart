@@ -12,7 +12,9 @@ class InterestScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AssessmentProvider>();
-    final answered = kInterestQuestions.where((q) => provider.interestAnswers.containsKey(q.id)).length;
+    final answered = kInterestQuestions
+        .where((q) => provider.interestAnswers.containsKey(q.id))
+        .length;
     final allDone = answered == kInterestQuestions.length;
     return Scaffold(
       appBar: AppBar(title: const Text('Minat')),
@@ -23,7 +25,8 @@ class InterestScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: ProgressHeader(
                 title: 'Kuesioner Minat',
-                subtitle: '$answered dari ${kInterestQuestions.length} pertanyaan terisi',
+                subtitle:
+                    '$answered dari ${kInterestQuestions.length} pertanyaan terisi',
                 progress: answered / kInterestQuestions.length,
               ),
             ),
@@ -41,7 +44,9 @@ class InterestScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('${i + 1}. ${q.text}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                          Text('${i + 1}. ${q.text}',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 8),
                           Column(
                             children: [
@@ -53,7 +58,11 @@ class InterestScreen extends StatelessWidget {
                                   value: opt,
                                   groupValue: selected,
                                   onChanged: (v) {
-                                    if (v != null) context.read<AssessmentProvider>().setInterest(q.id, v);
+                                    if (v != null) {
+                                      context
+                                          .read<AssessmentProvider>()
+                                          .setInterest(q.id, v);
+                                    }
                                   },
                                 ),
                             ],
@@ -69,7 +78,8 @@ class InterestScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: FilledButton(
                 onPressed: allDone
-                    ? () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SkillScreen()))
+                    ? () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const SkillScreen()))
                     : null,
                 child: const Text('Lanjut ke penilaian skill'),
               ),
