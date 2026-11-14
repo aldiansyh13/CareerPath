@@ -100,10 +100,10 @@ Gerbang B: navigasi dari splash sampai detail berjalan dengan data dummy, Fireba
 - [ ] &#91;Must\] B: `AuthService` (daftar, masuk, keluar) dan layar Masuk/Daftar terhubung; pantau `authStateChanges` agar sesi bertahan
 - [ ] &#91;Must\] B: pesan error Auth dalam Bahasa Indonesia (email salah, sandi lemah, akun sudah ada)
 - [ ] &#91;Must\] Isi Laporan **L-04** (login berfungsi, akun muncul di konsol Firebase)
-- [ ] &#91;Must\] C: parse JSON ke model `CareerResult` dengan `try/catch`
+- [x] &#91;Must\] C: parse JSON ke model `CareerResult` dengan `try/catch` — bukti: 26 uji unit LULUS ([L-05](HASIL-KERJA.md#l-05))
 - [ ] &#91;Must\] B: `AssessmentProvider` menampung jawaban selama pengisian; validasi semua wajib diisi
-- [ ] &#91;Must\] C: tombol "Analisis dengan AI" mengirim data asli ke Gemini; cegah klik ganda
-- [ ] &#91;Must\] Isi Laporan **L-05** (Gemini terhubung ke alur asli)
+- [ ] &#91;Must\] C: tombol "Analisis dengan AI" mengirim data asli ke Gemini; cegah klik ganda — service live LULUS, alur UI end-to-end belum dijalankan
+- [x] &#91;Must\] Isi Laporan **L-05** (Gemini terhubung ke alur asli) — lihat [L-05](HASIL-KERJA.md#l-05), live 11 panggilan sukses
 - [ ] &#91;Must\] A+C: layar loading, layar hasil, dan detail menampilkan data asli; tampilkan error dengan tombol coba lagi
 - [ ] &#91;Must\] B: `FirestoreService.saveProfile()` dan simpan profil saat pertama login
 - [ ] &#91;Must\] Isi Laporan **L-06** (alur lengkap berjalan dari login sampai hasil)
@@ -116,18 +116,18 @@ Gerbang C: alur penuh berjalan di APK debug: daftar, profil, asesmen, hasil dari
 
 - [ ] Bagi shift istirahat minimal 4–5 jam per orang (anggota yang kurang tidur membuat bug dan salah demo)
 - [ ] &#91;Must\] D: jalankan 5 skenario uji dan checklist QA di bagian 3, catat bug di tabel bug
-- [ ] &#91;Must\] C: perbaiki prompt berdasarkan hasil uji (kualitas alasan, format JSON, konsistensi skor)
+- [x] &#91;Must\] C: perbaiki prompt berdasarkan hasil uji (kualitas alasan, format JSON, konsistensi skor) — bukti: schema diperketat + retry koreksi ([L-08](HASIL-KERJA.md#l-08))
 - [ ] &#91;Must\] A: perbaiki bug UI yang paling terlihat (overflow, teks terpotong, tombol tidak aktif)
 - [ ] &#91;Must\] B: uji aturan Firestore (pengguna A tidak bisa membaca data pengguna B)
-- [ ] &#91;Must\] Isi Laporan **L-08** (hasil stabilisasi dan daftar bug yang tersisa)
+- [x] &#91;Must\] Isi Laporan **L-08** (hasil stabilisasi dan daftar bug yang tersisa) — lihat [L-08](HASIL-KERJA.md#l-08)
 
 Gerbang D: 5 skenario uji menghasilkan hasil masuk akal dan tidak crash.
 
 ### Blok E (jam 28–38): Fitur pembeda dan polish
 
 - [ ] &#91;Should\] Mode demo: tombol yang mengisi jawaban contoh otomatis
-- [ ] &#91;Should\] Fallback: jika Gemini gagal, tampilkan hasil contoh dengan label jelas
-- [ ] &#91;Should\] Roadmap 4 minggu dibuat lebih konkret di prompt
+- [x] &#91;Should\] Fallback: jika Gemini gagal, tampilkan hasil contoh dengan label jelas — bukti: `sample_result.dart` tervalidasi + label di `result_screen.dart` ([L-08](HASIL-KERJA.md#l-08))
+- [x] &#91;Should\] Roadmap 4 minggu dibuat lebih konkret di prompt — bukti: prompt + `responseSchema` + validator ([L-08](HASIL-KERJA.md#l-08))
 - [ ] &#91;Could\] Google Sign-In (hanya jika SHA-1 sudah dipahami dan blok D bersih)
 - [ ] &#91;Could\] Grafik radar minat atau kartu hasil yang bisa dibagikan
 - [ ] &#91;Must\] Ikon dan nama aplikasi, splash, disclaimer di halaman hasil
@@ -195,12 +195,12 @@ Centang daftar ini di blok D, lalu ulangi seluruhnya di blok F pada APK rilis (b
 
 ### 3.4 Pengecekan AI
 
-- [ ] JSON dari Gemini valid pada 10 panggilan berturut-turut tanpa gagal parse
-- [ ] Karier yang direkomendasikan hanya dari daftar 8 karier
-- [ ] Alasan menyebut data pengguna (jurusan, skill, minat), bukan kalimat umum
-- [ ] Bahasa Indonesia konsisten
-- [ ] Tidak ada klaim berlebihan (gaji atau jaminan diterima kerja)
-- [ ] Waktu respons di bawah 15 detik pada koneksi yang akan dipakai saat demo
+- [ ] JSON dari Gemini valid pada 10 panggilan berturut-turut tanpa gagal parse — baru 8/8 berturut-turut; panggilan ke-9 gagal kontrak roadmap setelah retry
+- [x] Karier yang direkomendasikan hanya dari daftar 8 karier — 11/11 panggilan live LULUS (validator katalog)
+- [ ] Alasan menyebut data pengguna (jurusan, skill, minat), bukan kalimat umum — perlu audit manual contoh respons
+- [ ] Bahasa Indonesia konsisten — perlu audit manual contoh respons
+- [ ] Tidak ada klaim berlebihan (gaji atau jaminan diterima kerja) — perlu audit manual contoh respons
+- [ ] Waktu respons di bawah 15 detik pada koneksi yang akan dipakai saat demo — live 14-20 detik, belum konsisten
 - [ ] Jika field kosong atau tidak lengkap, UI tidak crash
 
 ### 3.5 Pengecekan error dan ketahanan
@@ -349,10 +349,10 @@ Isi kolom status dan tempel ringkasan laporan (atau tautan ke berkas laporan di 
 | L-02 | UI statis semua layar dengan data dummy | Aldi (A: Flutter UI) | 2026-11-14 | LULUS otomatis (`flutter analyze` + **11 widget test**, termasuk uji layar kecil 5"); uji HP: MENUNGGU | Detail: [L-02](HASIL-KERJA.md#l-02) (2 sesi: fix RadioGroup, fix overflow Welcome, tombol Keluar profil, nama app) |
 | L-03 | Firebase terpasang dan terinisialisasi |  |  |  |  |
 | L-04 | Login, daftar, keluar, sesi bertahan |  |  |  |  |
-| L-05 | Gemini terhubung ke alur asli |  |  |  |  |
+| L-05 | Gemini terhubung ke alur asli | Faji (C) | 2026-11-14 | 26 test otomatis LULUS; live 11 panggilan sukses dengan `gemini-3.6-flash` | [L-05](HASIL-KERJA.md#l-05) — service/validator/anti-dobel + retry kontrak; 10 berturut-turut & alur UI belum terbukti |
 | L-06 | Alur lengkap dari login sampai hasil |  |  |  |  |
 | L-07 | Riwayat tersimpan di Firestore |  |  |  |  |
-| L-08 | Stabilisasi dan perbaikan bug |  |  |  |  |
+| L-08 | Stabilisasi dan perbaikan bug | Faji (C) | 2026-11-14 | 26 test otomatis LULUS; live 11 panggilan sukses, 1 gagal kontrak, lalu 429 | [L-08](HASIL-KERJA.md#l-08) — prompt/schema/retry, parser defensif, 26 test; 5 skenario UI belum; widget test lama gagal (bukan AI) |
 | L-09 | Fitur pembeda dan polish |  |  |  |  |
 | L-10 | Build rilis dan kondisi akhir |  |  |  |  |
 
