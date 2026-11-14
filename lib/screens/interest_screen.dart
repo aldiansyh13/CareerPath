@@ -43,22 +43,20 @@ class InterestScreen extends StatelessWidget {
                         children: [
                           Text('${i + 1}. ${q.text}', style: const TextStyle(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 8),
-                          RadioGroup<String>(
-                            groupValue: selected,
-                            onChanged: (v) {
-                              if (v != null) context.read<AssessmentProvider>().setInterest(q.id, v);
-                            },
-                            child: Column(
-                              children: [
-                                for (final opt in q.options)
-                                  RadioListTile<String>(
-                                    contentPadding: EdgeInsets.zero,
-                                    dense: true,
-                                    title: Text(opt),
-                                    value: opt,
-                                  ),
-                              ],
-                            ),
+                          Column(
+                            children: [
+                              for (final opt in q.options)
+                                RadioListTile<String>(
+                                  contentPadding: EdgeInsets.zero,
+                                  dense: true,
+                                  title: Text(opt),
+                                  value: opt,
+                                  groupValue: selected,
+                                  onChanged: (v) {
+                                    if (v != null) context.read<AssessmentProvider>().setInterest(q.id, v);
+                                  },
+                                ),
+                            ],
                           ),
                         ],
                       ),
