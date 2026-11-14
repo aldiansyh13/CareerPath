@@ -13,14 +13,14 @@ Dokumen kerja peran **D (Sabrina)**: slide maksimal 7, naskah 3 menit, skenario 
 | 7 slide (isi) | SIAP di dokumen ini | Perlu diekspor ke PowerPoint/Canva; jangan menaruh key/`.env` di slide |
 | Naskah 3 menit | SIAP (draf) | Latihan 2× dengan timer belum |
 | Survei mini (angka masalah) | **BELUM** | Wajib diisi tim dengan data responden asli; jangan mengarang |
-| Tangkapan layar asli | **BELUM** | Ambil Welcome, hasil 3 kartu, detail roadmap dari HP |
+| Tangkapan layar asli | **BELUM** | Ambil Welcome, hasil 3 kartu, detail roadmap dari HP; percobaan render headless (golden test) menggantung di lingkungan QA sehingga dibatalkan |
 | Akun demo + 1 riwayat | **BELUM** | Buat setelah Firebase/build beres |
 | Video demo cadangan | **BELUM** | Rekam setelah APK rilis jalan |
-| Hasil uji untuk Slide 6 | SEBAGIAN | 27/27 uji otomatis lulus; build rilis & 5 skenario AI live belum |
+| Hasil uji untuk Slide 6 | SEBAGIAN | 27/27 uji otomatis lulus; build rilis belum; 5 skenario AI live **dicoba, gagal karena kuota key (HTTP 429)** |
 
-**Angka yang sudah terbukti (aman diklaim):** 27 uji otomatis lulus; `flutter analyze` 0 error/0 warning; katalog 8 karier/8 pertanyaan/6 skill; validasi kontrak JSON diuji; alur lokal end-to-end (profil → hasil → detail → riwayat → ulangi) diuji.
+**Angka yang sudah terbukti (aman diklaim):** 27 uji otomatis lulus; `flutter analyze` 0 error/0 warning; katalog 8 karier/8 pertanyaan/6 skill; validasi kontrak JSON diuji; alur lokal end-to-end (profil → hasil → detail → riwayat → ulangi) diuji; endpoint Gemini terjangkau dari lingkungan QA.
 
-**Jangan diklaim sebelum ada bukti:** “akurat”, “5 skenario AI lulus”, “APK rilis siap”, “sudah diuji 2 HP”.
+**Jangan diklaim sebelum ada bukti:** “akurat”, “5 skenario AI lulus”, “APK rilis siap”, “sudah diuji 2 HP”. Uji live 2026-11-14 berakhir **0/5** (503/timeout, lalu HTTP 429 kuota habis) — lihat [`HASIL-KERJA.md`](HASIL-KERJA.md#l-08).
 
 ---
 
@@ -53,9 +53,9 @@ Diagram sederhana: **Pengguna → Aplikasi Flutter → Firebase Auth/Firestore +
 - Demo dilakukan langsung di HP; slide ini hanya jangkar bila proyektor lambat.
 
 ### Slide 6 — Hasil uji & keterbatasan jujur
-- Isi dari `HASIL-KERJA.md` (per 2026-11-14): **27/27 uji otomatis lulus**; `flutter analyze` **0 error/0 warning**; **build rilis belum** (`google-services.json` belum tersedia); **5 skenario AI live belum teruji** (endpoint Gemini tidak terjangkau dari lingkungan QA — perlu diulang di HP/jaringan demo).
-- Keterbatasan: saran awal bukan keputusan final; key demo masih di sisi klien untuk demo tertutup; belum ada backend produksi/App Check; analisis butuh internet.
-- Jangan mengklaim “akurat” — klaim “konsisten format, alasan transparan, diuji dengan skenario”. Bila angka 5 skenario belum teruji saat presentasi, katakan jujur “pengujian live sedang dilakukan; format & validasi sudah diuji otomatis”.
+- Isi dari `HASIL-KERJA.md` (per 2026-11-14): **27/27 uji otomatis lulus**; `flutter analyze` **0 error/0 warning**; **build rilis belum** (`google-services.json` belum tersedia); **5 skenario AI live belum lulus** — endpoint Gemini kini terjangkau, tetapi panggilan berakhir HTTP **429 kuota key habis** (didahului 503/timeout).
+- Keterbatasan: saran awal bukan keputusan final; key demo masih di sisi klien untuk demo tertutup; belum ada backend produksi/App Check; analisis butuh internet dan kuota key yang cukup.
+- Jangan mengklaim “akurat” — klaim “konsisten format, alasan transparan, diuji dengan skenario”. Bila angka 5 skenario belum teruji saat presentasi, katakan jujur “pengujian live terkendala kuota key; format & validasi sudah diuji otomatis, dan hasil contoh tersedia offline”.
 
 ### Slide 7 — Rencana lanjutan & penutup
 - Backend aman/Firebase AI Logic + App Check untuk APK publik.
@@ -102,7 +102,7 @@ Diagram sederhana: **Pengguna → Aplikasi Flutter → Firebase Auth/Firestore +
 
 | Risiko | Tindakan |
 | --- | --- |
-| Gemini lambat/gagal/kuota | Tekan **Gunakan contoh hasil (tanpa AI)**; katakan terus terang itu contoh. |
+| Gemini lambat/gagal/kuota (termasuk **HTTP 429**) | Tekan **Gunakan contoh hasil (tanpa AI)**; katakan terus terang itu contoh. Jika 429 muncul saat gladi, minta pemilik mengganti key/menambah kuota sebelum demo. |
 | Internet venue mati | Pindah ke hotspot cadangan yang sudah diuji. |
 | Login bermasalah | Pakai HP cadangan yang sudah login dengan akun demo. |
 | Aplikasi crash | Buka HP cadangan atau putar video demo cadangan. |
@@ -122,7 +122,7 @@ Diagram sederhana: **Pengguna → Aplikasi Flutter → Firebase Auth/Firestore +
 | Keamanan data pengguna? | Auth Firebase, data per-UID di `users/{uid}`, aturan Firestore membatasi akses ke pemilik data; hanya jawaban asesmen yang dikirim ke Gemini. Untuk produksi, panggilan Gemini dipindah ke backend. |
 | Mengapa Firebase? | Dukungan Flutter matang, dokumen JSON cocok dengan output Gemini, Auth + Firestore mempercepat MVP. |
 | Bagaimana jika AI salah/mengarang? | Pilihan dibatasi 8 karier, output wajib JSON dan divalidasi; alasan harus merujuk jawaban; ada disclaimer. Respons tidak valid ditolak dan pengguna bisa coba lagi. |
-| Apa yang belum selesai? | Build rilis perlu `google-services.json` + keputusan jalur B (AI Logic/App Check); verifikasi 2 perangkat dan aturan Firestore dua akun masih menunggu akses cloud. |
+| Apa yang belum selesai? | Build rilis perlu `google-services.json` + keputusan jalur B (AI Logic/App Check); kuota API key Gemini sedang habis (HTTP 429) sehingga uji live harus diulang; verifikasi 2 perangkat dan aturan Firestore dua akun masih menunggu akses cloud. |
 | Bagaimana keberlanjutan? | Kemitraan career center kampus/bootcamp, versi premium untuk konsultasi dan pelacakan progres, analisis CV. |
 | Apa langkah berikutnya? | Backend aman, App Check, Google Sign-In, analisis CV, rekomendasi kursus. |
 
@@ -159,7 +159,7 @@ Isi hanya dengan bukti nyata; jangan mengarang angka.
 - [ ] Akun demo (email) + 1 hasil di riwayat; sandi hanya di HP demo.
 - [ ] Screenshot asli: Welcome, 3 kartu hasil, detail roadmap (Slide 3 & README).
 - [ ] Status APK rilis + hasil uji 2 HP (Slide 6) — saat ini **TERHAMBAT**.
-- [ ] Hasil 5 skenario AI live (Slide 6) — saat ini **BELUM**; jalankan `dart run tool/qa_live_gemini.dart` dari jaringan yang bisa mengakses Gemini.
+- [ ] Hasil 5 skenario AI live (Slide 6) — saat ini **0/5** karena HTTP 429 kuota key; jalankan `dart run tool/qa_live_gemini.dart` setelah kuota/key diperbarui dari jaringan yang bisa mengakses Gemini.
 - [ ] Video demo cadangan (urutan bagian 3) tersimpan di HP + laptop.
 - [ ] Slide diekspor ke file presentasi (≤7) dan diperiksa bebas key/`.env`.
 - [ ] Latihan pitch 2× dengan timer; tentukan operator HP, pembicara, penjawab teknis.

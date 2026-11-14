@@ -115,7 +115,7 @@ Gerbang C: alur penuh berjalan di APK debug: daftar, profil, asesmen, hasil dari
 ### Blok D (jam 20–28): Stabilisasi dan istirahat
 
 - [ ] Bagi shift istirahat minimal 4–5 jam per orang (anggota yang kurang tidur membuat bug dan salah demo)
-- [ ] &#91;Must\] D: jalankan 5 skenario uji dan checklist QA di bagian 3, catat bug di tabel bug — **PARSIAL**: uji otomatis & bug log selesai, 5 skenario AI/HP **MENUNGGU** jaringan & cloud ([L-08](HASIL-KERJA.md#l-08)).
+- [ ] &#91;Must\] D: jalankan 5 skenario uji dan checklist QA di bagian 3, catat bug di tabel bug — **PARSIAL**: uji otomatis & bug log selesai; endpoint Gemini kini terjangkau tetapi kuota key habis (HTTP 429), jadi 5 skenario live & uji HP **MENUNGGU** kuota/cloud ([L-08](HASIL-KERJA.md#l-08)).
 - [ ] &#91;Must\] C: perbaiki prompt berdasarkan hasil uji (kualitas alasan, format JSON, konsistensi skor)
 - [ ] &#91;Must\] A: perbaiki bug UI yang paling terlihat (overflow, teks terpotong, tombol tidak aktif)
 - [ ] &#91;Must\] B: uji aturan Firestore (pengguna A tidak bisa membaca data pengguna B)
@@ -131,7 +131,7 @@ Gerbang D: 5 skenario uji menghasilkan hasil masuk akal dan tidak crash.
 - [ ] &#91;Could\] Google Sign-In (hanya jika SHA-1 sudah dipahami dan blok D bersih)
 - [ ] &#91;Could\] Grafik radar minat atau kartu hasil yang bisa dibagikan
 - [ ] &#91;Must\] Ikon dan nama aplikasi, splash, disclaimer di halaman hasil
-- [x] &#91;Must\] Hapus `print`, jalankan `flutter analyze` — **LULUS**: tidak ada `print` di `lib/`; 0 error, 0 warning, 23 info (16 deprecation `material.dart`, 7 `avoid_print` hanya di alat QA `tool/`). Bukti: [L-08](HASIL-KERJA.md#l-08).
+- [x] &#91;Must\] Hapus `print`, jalankan `flutter analyze` — **LULUS**: tidak ada `print` di `lib/`; 0 error, 0 warning; sisa info hanya 16 deprecation `material.dart` dan `avoid_print` di alat QA `tool/`. Bukti: [L-08](HASIL-KERJA.md#l-08).
 - [ ] &#91;Must\] Isi Laporan **L-09**
 
 Gerbang E: aplikasi terlihat rapi dan ada minimal satu hal "wow" yang bisa ditunjukkan.
@@ -169,7 +169,7 @@ Centang daftar ini di blok D, lalu ulangi seluruhnya di blok F pada APK rilis (b
 | 4 | Semua skill dinilai 1 | Hasil tetap tampil dan masuk akal, roadmap fokus pada dasar |
 | 5 | Semua skill dinilai 5 | Skor tidak semua 100, hasil tetap bervariasi |
 
-> Status 2026-11-14 (D): kelima skenario sudah disiapkan sebagai input sintetis di `tool/qa_live_gemini.dart`, tetapi eksekusi live **BELUM LULUS** karena endpoint `generativelanguage.googleapis.com` tidak terjangkau dari lingkungan QA (timeout; domain lain normal). Jalankan ulang dari jaringan/HP pemilik, lalu catat hasil di [L-08](HASIL-KERJA.md#l-08). Jangan centang sebelum ada hasil nyata.
+> Status 2026-11-14 (D): kelima skenario sudah disiapkan sebagai input sintetis di `tool/qa_live_gemini.dart`. Uji live sudah **dicoba ulang** setelah jaringan pulih (endpoint discovery HTTP 200) dan menghasilkan **0/5**: dua skenario HTTP 503, tiga timeout, lalu probe langsung menerima **HTTP 429 kuota habis**. Jadi hambatannya sekarang **kuota/limit API key**, bukan jaringan atau kode. Ganti key/tambah kuota lalu jalankan ulang dari HP/jaringan demo, lalu catat hasil di [L-08](HASIL-KERJA.md#l-08). Jangan centang sebelum ada hasil nyata.
 
 ### 3.2 Pengecekan login dan Firebase
 
@@ -204,6 +204,8 @@ Centang daftar ini di blok D, lalu ulangi seluruhnya di blok F pada APK rilis (b
 - [ ] Tidak ada klaim berlebihan (gaji atau jaminan diterima kerja)
 - [ ] Waktu respons di bawah 15 detik pada koneksi yang akan dipakai saat demo
 - [ ] Jika field kosong atau tidak lengkap, UI tidak crash
+
+> Status 2026-11-14 (D): kontrak JSON & penolakan respons tidak valid sudah diuji otomatis (LULUS). Pengecekan live di tabel ini **BELUM** bisa dicentang: panggilan `generateContent` berakhir **HTTP 429 kuota habis** (didahului 503/timeout), jadi kualitas alasan, konsistensi Bahasa, dan waktu respons <15 dtk belum terbukti. Lihat [L-08](HASIL-KERJA.md#l-08).
 
 ### 3.5 Pengecekan error dan ketahanan
 
@@ -354,7 +356,7 @@ Isi kolom status dan tempel ringkasan laporan (atau tautan ke berkas laporan di 
 | L-05 | Gemini terhubung ke alur asli |  |  |  |  |
 | L-06 | Alur lengkap dari login sampai hasil |  |  |  |  |
 | L-07 | Riwayat tersimpan di Firestore |  |  |  |  |
-| L-08 | Stabilisasi dan perbaikan bug | Sabrina (D) | 2026-11-14 | LULUS parsial: 0 error/0 warning, 27/27 uji otomatis; AI live & cloud MENUNGGU | [L-08](HASIL-KERJA.md#l-08) |
+| L-08 | Stabilisasi dan perbaikan bug | Sabrina (D) | 2026-11-14 | LULUS parsial: 0 error/0 warning, 27/27 uji otomatis; AI live 0/5 karena HTTP 429 (kuota key) & cloud MENUNGGU | [L-08](HASIL-KERJA.md#l-08) |
 | L-09 | Fitur pembeda dan polish |  |  |  |  |
 | L-10 | Build rilis dan kondisi akhir | Sabrina (D) | 2026-11-14 | TERHAMBAT: `google-services.json` tidak ada; APK belum dihasilkan | [L-10](HASIL-KERJA.md#l-10) |
 

@@ -7,12 +7,12 @@ Satu log untuk seluruh sesi. Saat memulai, isi posisi terakhir dari keadaan repo
 | Yang perlu diketahui agent berikut | Isi saat checkpoint |
 |---|---|
 | Waktu dan penanggung jawab | 2026-11-14, Sabrina (agent, peran D: QA/dokumentasi/pitch/rilis), branch `sabrina` |
-| Blok, ID laporan, tugas aktif | **L-08 (QA & stabilisasi) SELESAI untuk bagian yang bisa diuji lokal. L-10 (build rilis) TERHAMBAT.** Artefak D: 27 uji otomatis, bug log, audit keamanan repo, README, `PITCH-DEMO.md`, alat uji AI live. Uji cloud/HP dan build rilis menunggu tindakan pemilik (lihat hambatan). |
-| Kondisi kode dan uji terakhir | `flutter analyze` → **0 error, 0 warning**, 23 info (16 `deprecated_member_use` `material.dart` + 7 `avoid_print` di `tool/`). `flutter test` → **27/27 LULUS** (widget, validator/kontrak JSON, local store/provider, alur end-to-end lokal). `flutter build apk --release` → **GAGAL**: `google-services.json` tidak ada (plugin Google Services aktif) + cache Kotlin terkunci. APK rilis belum ada. Uji perangkat/5 skenario AI live **BELUM** (endpoint Gemini tidak terjangkau dari lingkungan ini). |
+| Blok, ID laporan, tugas aktif | **L-08 (QA & stabilisasi) SELESAI untuk bagian yang bisa diuji lokal; uji AI live dicoba ulang dan TERHAMBAT oleh kuota key. L-10 (build rilis) TERHAMBAT.** Artefak D: 27 uji otomatis, bug log, audit keamanan repo, README, `PITCH-DEMO.md`, alat uji AI live. Uji cloud/HP, build rilis, dan 5 skenario AI live menunggu tindakan pemilik (lihat hambatan). |
+| Kondisi kode dan uji terakhir | `flutter analyze --no-pub` → **0 error, 0 warning**, 25 info (16 `deprecated_member_use` `material.dart` + 9 `avoid_print` di `tool/`). `flutter test --no-pub` → **27/27 LULUS** (widget, validator/kontrak JSON, local store/provider, alur end-to-end lokal). `dart run tool/qa_live_gemini.dart --timeout=90` → **0/5**: skenario 1–2 HTTP 503, skenario 3–5 timeout 90 dtk. Probe langsung `generateContent` → **HTTP 429 kuota habis**. Domain Gemini kini **terjangkau** (discovery endpoint HTTP 200), jadi hambatan jaringan sebelumnya sudah hilang; sisa hambatan adalah kuota/limit key. `flutter build apk --release` tetap **GAGAL**: `google-services.json` tidak ada. |
 | Pilihan integrasi Gemini | Tetap **Jalur A (REST Gemini Developer API)**: `lib/services/gemini_service.dart` membaca `.env`, `responseMimeType: application/json`, timeout 40 dtk, validasi 3 karier dari 8 katalog/4 minggu/skor. Tidak ada perubahan transport oleh peran D. Jalur B (Firebase AI Logic + App Check) tetap rencana untuk APK distribusi. |
-| Hambatan / tindakan pemilik | (1) **Lutfi/pemilik:** sediakan `android/app/google-services.json` (`flutterfire configure --project=careerpath-e3adb --platforms=android`) dan ubah `lib/main.dart` agar memakai `DefaultFirebaseOptions.currentPlatform`; file `lib/firebase_options.dart` sudah ada tetapi belum diimpor. (2) **Lutfi:** simpan & publish `firestore.rules` per-UID, uji akun A vs B. (3) **Pemilik:** jalankan 5 skenario AI live dari jaringan yang bisa mengakses `generativelanguage.googleapis.com` (`dart run tool/qa_live_gemini.dart`), lalu uji di HP. (4) **Aldi:** cegah submit ganda “Analisis dengan AI”, rapikan nama aplikasi. |
-| Tindakan berikut | Perbaiki bug Fatal di bug log → ulangi `flutter build apk --release` → pasang di ≥2 HP → jalankan checklist QA §3 To-Do pada APK rilis → isi L-10 dan angka final di `PITCH-DEMO.md`. |
-| Bukti selesai untuk tindakan berikut | Build rilis menghasilkan `app-release.apk`; akun uji muncul di Auth; dokumen `users/{uid}/assessments` muncul di Firestore; 5 skenario AI live lulus; tidak ada overflow/error offline; video demo & slide tersimpan; semua bukti dicatat di L-10. |
+| Hambatan / tindakan pemilik | (1) **Faji/pemilik:** ganti/isi ulang kuota `GEMINI_API_KEY` (HTTP 429 “exceeded your current quota”) lalu jalankan `dart run tool/qa_live_gemini.dart` dari jaringan yang bisa mengakses Gemini; pertimbangkan model Flash yang tersedia untuk key tersebut. (2) **Lutfi/pemilik:** sediakan `android/app/google-services.json` (`flutterfire configure --project=careerpath-e3adb --platforms=android`) dan ubah `lib/main.dart` agar memakai `DefaultFirebaseOptions.currentPlatform`; file `lib/firebase_options.dart` sudah ada tetapi belum diimpor. (3) **Lutfi:** simpan & publish `firestore.rules` per-UID, uji akun A vs B. (4) **Aldi:** cegah submit ganda “Analisis dengan AI”, rapikan nama aplikasi. |
+| Tindakan berikut | Isi kuota/key Gemini → jalankan 5 skenario AI live → perbaiki bug Fatal di bug log → ulangi `flutter build apk --release` → pasang di ≥2 HP → jalankan checklist QA §3 To-Do pada APK rilis → isi L-10 dan angka final di `PITCH-DEMO.md`. |
+| Bukti selesai untuk tindakan berikut | 5/5 skenario AI live LULUS (tanpa 429/503/timeout); `app-release.apk` ada; akun uji muncul di Auth; dokumen `users/{uid}/assessments` muncul di Firestore; tidak ada overflow/error offline; video demo & slide tersimpan; semua bukti dicatat di L-10. |
 
 ## Catatan pekerjaan
 
@@ -70,6 +70,19 @@ Tambahkan entri di bawah judul ID terkait. Buat judul stabil seperti `## L-02` s
 - Gerbang blok dan butir To-Do yang diperbarui: Gerbang D **BELUM** (5 skenario AI/HP belum). Butir To-Do yang dicentang hanya yang terbukti: hasil 3 kartu, detail roadmap, riwayat lokal, ulangi asesmen (3.3); `.env` ignored/tidak tracked, tidak ada key Gemini di repo, izin INTERNET, README setup (3.6); hapus `print` + analyze (E); izin INTERNET untuk rilis (F). Indeks §4.4 diisi untuk L-08.
 - Tindakan berikut, lokasi mulai dan tanda berhasil: Mulai dari bug Fatal #1–#2 (build & init Firebase). Setelah `google-services.json` ada dan `main.dart` memakai `DefaultFirebaseOptions.currentPlatform`, ulangi `flutter analyze`, `flutter test`, `flutter build apk --release`, lalu QA HP. Tanda berhasil: APK rilis terpasang, login cloud & riwayat tersimpan, 5 skenario AI live lulus, bug log diperbarui.
 
+#### Sesi lanjutan 2026-11-14 — uji AI live setelah jaringan pulih
+
+- **Tujuan:** mengulang 5 skenario AI live yang sebelumnya terblokir jaringan, tanpa mengubah kode fitur A/B/C.
+- **Uji oleh agent:**
+  - Probe `https://generativelanguage.googleapis.com/$discovery/rest?version=v1beta` → **HTTP 200**. Hambatan jaringan lama **sudah hilang**; domain Gemini kini terjangkau dari lingkungan QA.
+  - `dart run tool/qa_live_gemini.dart --timeout=90` (model `gemini-flash-latest`, 5 skenario) → **GAGAL 0/5, total 330 dtk**: skenario 1 HTTP **503** (24,9 dtk), skenario 2 HTTP **503** (35,4 dtk), skenario 3–5 `TimeoutException` 90 dtk.
+  - Probe `generateContent` minimal (prompt “Balas hanya: OK”) → percobaan pertama timeout 45 dtk; percobaan kedua **HTTP 429** `You exceeded your current quota, please check your plan and billing details` (0,9 dtk).
+  - `dart run tool/qa_live_gemini.dart --only=1 --timeout=20` setelah alat diperbaiki → **HTTP 429 `RESOURCE_EXHAUSTED`** dalam 632 ms; alat mencetak pesan kuota yang jelas dan menghentikan sisa skenario (terbukti berfungsi).
+  - `flutter analyze --no-pub` → **0 error, 0 warning, 25 info** (2 info `avoid_print` baru dari pesan diagnosa 429/503 di alat QA). `flutter test --no-pub` → **27/27 LULUS**.
+- **Kesimpulan:** kegagalan live **bukan** bukti kode/validasi AI salah. Endpoint & kredensial terbaca, tetapi **kuota/limit API key habis** (429); 503/timeout adalah gejala layanan sibuk/kuota. Uji live harus diulang setelah pemilik mengganti key atau menambah kuota, idealnya dengan model Flash yang tersedia untuk key tersebut.
+- **Perbaikan alat QA (milik peran D):** `tool/qa_live_gemini.dart` kini menampilkan `status: message` singkat dari error API (maks. 180 karakter, tanpa respons mentah/key), memberi petunjuk khusus untuk **429 (kuota habis)** dan **503 (layanan sibuk)**, serta **menghentikan sisa skenario** saat 429 agar tidak menunggu lama. Exit code tetap 1 bila ada kegagalan.
+- **Tidak diubah:** `lib/**` (fitur A/B/C), `android/**`, `firestore.rules` (belum ada), dan `.env` (hanya dibaca; key tidak pernah dicetak).
+
 ### Bug log (triase peran D)
 
 | No | Deskripsi singkat | Langkah mengulang | Tingkat | PIC | Status |
@@ -82,16 +95,18 @@ Tambahkan entri di bawah judul ID terkait. Buat judul stabil seperti `## L-02` s
 | 6 | Alat QA `tool/qa_live_gemini.dart` error `_argValue` tidak terdefinisi; opsi `--only`/`--timeout` tidak dipakai | `flutter analyze` sebelum perbaikan | Kecil (alat QA) | Sabrina | **SELESAI** (diperbaiki, analyze bersih) |
 | 7 | Cache Kotlin `shared_preferences_android` gagal ditutup saat build rilis | Ulangi `flutter build apk --release`; bila perlu `flutter clean` | Kecil (lingkungan build) | Pemilik build | TERBUKA (menunggu #1) |
 | 8 | `.env` ikut dibundel sebagai asset APK (key dapat diekstrak) | Periksa `pubspec.yaml` assets; hanya untuk demo tertutup | Risiko diterima (demo) | Pemilik | DITERIMA — jangan bagikan APK publik; gunakan jalur B bila distribusi |
+| 9 | Kuota/limit `GEMINI_API_KEY` habis: live test berakhir HTTP **429** (`exceeded your current quota`), didahului 503/timeout | `dart run tool/qa_live_gemini.dart --timeout=90` → 0/5; probe `generateContent` minimal → 429 | **Fatal** (demo AI live) | Faji/pemilik key | TERBUKA — ganti key/tambah kuota, lalu ulangi 5 skenario |
 
 ### Audit keamanan & kebersihan repo (bukti 2026-11-14)
 
-- `.env` **diabaikan** Git: `git check-ignore -v .env` → `.gitignore:46:.env`; `git ls-files -- .env` kosong; `git log -- .env` kosong (tidak pernah ter-commit). **LULUS.**
+- `.env` **diabaikan** Git: `git check-ignore -v .env` → `.gitignore:46:.env`; `git ls-files -- .env` kosong; `git log --all -- .env` kosong (tidak pernah ter-commit). **LULUS.** Audit ulang 2026-11-14 saat `.env` berisi key asli: key hanya dicetak panjangnya (53 karakter), tidak pernah nilainya; `git grep` nilai key di file yang di-track → 0 hasil.
 - `.env.example` berisi nilai kosong (`GEMINI_API_KEY=`, `GEMINI_MODEL=`), aman di-commit. **LULUS.**
 - Tidak ada key Gemini (pola `AIza…`) di file yang di-track selain `lib/firebase_options.dart`. File itu berisi **client API key Firebase** (bukan Gemini) untuk proyek `careerpath-e3adb`; aman untuk klien tetapi tetap batasi API key di Google Cloud. **LULUS dengan catatan.**
 - Tidak ada key/isi `.env` di README, `PITCH-DEMO.md`, atau dokumen PRD/panduan (hanya placeholder). **LULUS.**
 - Izin `android.permission.INTERNET` ada di `android/app/src/main/AndroidManifest.xml`. **LULUS.**
 - `google-services.json`, `firebase_app_id_file.json`, service-account JSON sudah masuk `.gitignore` dan tidak di-track. **LULUS.**
-- README menjelaskan cara membuat `.env`, setup Firebase/`flutterfire`, build, dan uji. **LULUS** (tangkapan layar masih kosong).
+- Tidak ada file `build/`, `*.apk`, atau `*.aab` yang di-track (`git ls-files build` kosong). **LULUS** — APK lokal yang mungkin memuat `.env` tidak ikut repo.
+- README menjelaskan cara membuat `.env`, setup Firebase/`flutterfire`, build, uji, dan penanganan 429/503. **LULUS** (tangkapan layar masih kosong).
 - Belum diverifikasi: rules Firestore terpublish, dua akun A/B, sesi bertahan, perilaku offline di perangkat. **MENUNGGU akses cloud/HP.**
 
 ## L-10
@@ -109,7 +124,7 @@ Tambahkan entri di bawah judul ID terkait. Buat judul stabil seperti `## L-02` s
   - Pemeriksaan statis manifest → `INTERNET` **ADA**; label aplikasi masih default.
   - `flutter analyze` / `flutter test` → lihat L-08 (LULUS dengan info / 27/27).
 - Uji manual oleh manusia — langkah, perangkat dan hasil, atau MENUNGGU: **MENUNGGU**. Langkah: setelah build berhasil, pasang `app-release.apk` di 2 HP, jalankan seluruh checklist §3 To-Do pada mode rilis, rekam video demo, latihan pitch 2× dengan timer, siapkan akun demo + 1 riwayat.
-- Kendala, tindakan perbaikan dan yang tersisa: (1) `google-services.json` + init Firebase (Lutfi/pemilik), (2) rules & uji dua akun, (3) bug #3–#4 (Aldi/Lutfi), (4) APK rilis & 2 perangkat, (5) video, slide final, angka survei, akun demo. Tidak ada key yang dicetak/di-commit selama QA.
+- Kendala, tindakan perbaikan dan yang tersisa: (1) `google-services.json` + init Firebase (Lutfi/pemilik), (2) rules & uji dua akun, (3) bug #3–#4 (Aldi/Lutfi), (4) APK rilis & 2 perangkat, (5) video, slide final, angka survei, akun demo, (6) tangkapan layar asli — percobaan render headless via golden test menggantung di lingkungan ini dan file uji sementara sudah dihapus, jadi screenshot harus diambil dari HP/emulator. Tidak ada key yang dicetak/di-commit selama QA.
 - Gerbang blok dan butir To-Do yang diperbarui: Gerbang F **BELUM** (APK rilis belum ada). Yang dicentang: izin INTERNET (F), README (G, kecuali tangkapan layar). Indeks §4.4 diisi untuk L-10.
 - Tindakan berikut, lokasi mulai dan tanda berhasil: Setelah bug Fatal #1–#2 selesai, jalankan ulang build; bila APK ada, uji di HP dan perbarui bagian ini + `PITCH-DEMO.md` dengan angka nyata. Tanda berhasil: APK rilis terpasang di 2 HP, video demo di 2 tempat, semua checkbox §3.7 tercentang, L-10 berubah menjadi SELESAI.
 

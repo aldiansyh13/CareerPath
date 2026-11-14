@@ -86,6 +86,8 @@ dart run tool/qa_live_gemini.dart   # butuh .env + akses ke endpoint Gemini
 
 > Jika `flutter test` menggantung saat mengambil dependensi (jaringan pub.dev lambat), jalankan `flutter test --no-pub` setelah `flutter pub get` pernah berhasil. Di lingkungan QA, perintah inilah yang menghasilkan 27/27 lulus.
 
+> **Diagnosa uji AI live (2026-11-14):** endpoint Gemini kini **terjangkau** (discovery HTTP 200), tetapi panggilan `generateContent` berakhir **HTTP 429 — kuota/limit API key habis**, didahului 503/timeout. Ganti key atau tambah kuota pemilik, lalu jalankan ulang alat QA. Alat otomatis berhenti setelah 429 agar tidak menunggu lama; 503 berarti layanan Gemini sedang sibuk (coba lagi nanti).
+
 Artefak QA (dimiliki peran D):
 
 | File | Isi |
@@ -94,18 +96,18 @@ Artefak QA (dimiliki peran D):
 | `test/qa_validators_test.dart` | Katalog 8/8/6, kontrak JSON hasil AI, penolakan respons tidak valid |
 | `test/qa_local_store_provider_test.dart` | Simpan/muat profil & riwayat lokal, reset asesmen, skenario batas skill 1/5 |
 | `test/qa_flow_test.dart` | Alur end-to-end lokal: profil → 8 minat → 6 skill → persetujuan → hasil contoh → detail → riwayat → ulangi |
-| `tool/qa_live_gemini.dart` | Menjalankan 5 skenario AI live terhadap Gemini; mencetak skor/karier/durasi tanpa key atau respons mentah. Opsi: `--only=1..5`, `--timeout=90` |
+| `tool/qa_live_gemini.dart` | Menjalankan 5 skenario AI live terhadap Gemini; mencetak skor/karier/durasi tanpa key atau respons mentah. Opsi: `--only=1..5`, `--timeout=90`; berhenti otomatis dengan pesan jelas saat kuota habis (429) atau layanan sibuk (503) |
 
 ### Status QA terbaru (2026-11-14)
 
 | Pemeriksaan | Hasil |
 | --- | --- |
-| `flutter analyze` | LULUS: 0 error, 0 warning; 23 info (deprecation `material.dart` + `avoid_print` hanya di `tool/`) |
+| `flutter analyze` | LULUS: 0 error, 0 warning; 25 info (deprecation `material.dart` + `avoid_print` hanya di `tool/`) |
 | `flutter test` | **LULUS 27/27** (widget, validator, local store/provider, alur lokal) |
-| 5 skenario AI live | **BELUM**: endpoint Gemini tidak terjangkau dari lingkungan QA (timeout); harus diulang dari jaringan/HP pemilik |
+| 5 skenario AI live | **BELUM LULUS**: endpoint sudah terjangkau, tetapi panggilan berakhir **HTTP 429 kuota habis** (didahului 503/timeout); ulangi setelah key/kuota diperbarui |
 | Build APK rilis | **GAGAL**: `google-services.json` tidak ada; APK belum dihasilkan |
 | Uji HP (login, offline, layar kecil, tekan ganda) | **BELUM**: menunggu perangkat & akses Firebase |
-| Keamanan repo | LULUS: `.env` ignored & tidak pernah ter-commit, tidak ada key Gemini di repo, izin `INTERNET` ada |
+| Keamanan repo | LULUS: `.env` ignored & tidak pernah ter-commit, nilai key tidak ada di file tracked, izin `INTERNET` ada |
 
 Hasil uji terbaru, bug log + PIC, dan sisa pekerjaan dicatat di [`HASIL-KERJA.md`](HASIL-KERJA.md#l-08).
 

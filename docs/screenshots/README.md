@@ -20,3 +20,5 @@ Folder ini disiapkan untuk bukti visual asli aplikasi. Jangan memakai tangkapan 
 5. Simpan dengan nama di atas, lalu tautkan ke README dan slide.
 
 Status 2026-11-14: **BELUM ADA** — menunggu APK/perangkat. Jangan mengisi slide dengan tangkapan layar palsu.
+
+Catatan QA (peran D): lingkungan QA ini tidak memiliki `adb`/emulator Android, dan percobaan render tangkapan layar secara headless (golden test Flutter) **menggantung** sehingga dibatalkan dan file uji sementaranya dihapus. Ambil screenshot di mesin yang memiliki HP/emulator setelah APK tersedia.
