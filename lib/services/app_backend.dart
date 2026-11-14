@@ -25,12 +25,14 @@ class AppBackend {
   }
 
   Future<void> saveProfile(UserProfile profile) async {
+    // Selalu simpan lokal agar profil tetap tersedia saat offline/fallback.
     await local.saveProfile(profile);
     final user = currentUser;
     if (user != null) {
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
         {
           ...profile.toJson(),
+          'updatedAt': FieldValue.serverTimestamp(),
           'createdAt': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),
@@ -91,23 +93,26 @@ class AppBackend {
             .collection('assessments')
             .orderBy('createdAt', descending: true)
             .get();
-        if (snap.docs.isNotEmpty) {
-          return snap.docs.map((d) {
-            final data = Map<String, dynamic>.from(d.data());
-            final created = data['createdAt'];
-            DateTime createdAt = DateTime.now();
-            if (created is Timestamp) createdAt = created.toDate();
-            final resultMap = Map<String, dynamic>.from(data['result'] as Map? ?? const {});
-            return AssessmentRecord(
-              id: d.id,
-              createdAt: createdAt,
-              input: Map<String, dynamic>.from(data['input'] as Map? ?? const {}),
-              result: CareerResult.fromJson(resultMap, isSample: data['isSample'] == true),
-            );
-          }).toList();
-        }
+        return snap.docs.map((d) {
+          final data = Map<String, dynamic>.from(d.data());
+          final created = data['createdAt'];
+          DateTime createdAt = DateTime.now();
+          if (created is Timestamp) {
+            createdAt = created.toDate();
+          } else if (created is String) {
+            createdAt = DateTime.tryParse(created) ?? DateTime.now();
+          }
+          final resultMap = Map<String, dynamic>.from(data['result'] as Map? ?? const {});
+          return AssessmentRecord(
+            id: d.id,
+            createdAt: createdAt,
+            input: Map<String, dynamic>.from(data['input'] as Map? ?? const {}),
+            result: CareerResult.fromJson(resultMap, isSample: data['isSample'] == true),
+          );
+        }).toList();
       } catch (e) {
         debugPrint('getHistory firestore error: $e');
+        // Jatuh ke riwayat lokal agar UI tetap bisa menampilkan cache perangkat.
       }
     }
     return local.getHistory();
