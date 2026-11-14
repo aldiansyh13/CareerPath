@@ -8,10 +8,10 @@ Satu log untuk seluruh sesi. Saat memulai, isi posisi terakhir dari keadaan repo
 |---|---|
 | Waktu dan penanggung jawab | 2026-11-14, Aldi (Orang 1 — UI/UX, Layar & Navigasi) via agent; checkpoint sebelumnya: Iceman (agent) |
 | Blok, ID laporan, tugas aktif | L-02 SELESAI (3 sesi: uji otomatis + toolchain build). Build Android **LULUS** & APK terinstall di HP 22101320G (Redmi, Android 13). Tindakan berikut: uji manual alur di HP (app sudah terpasang), lalu lanjut butir Orang 1 tersisa (ikon/splash, konsistensi copy). |
-| Kondisi kode dan uji terakhir | `flutter analyze` → LULUS (0 issues). `flutter test` → LULUS (**11 test**). `flutter build apk --debug` → LULUS (193 MB, 14/11 18:45) + `flutter install --debug` ke HP → LULUS. **Firebase OFF sementara** (google-services dinonaktifkan di `app/build.gradle.kts` karena `google-services.json` belum ada — lihat sesi toolchain). Uji alur manual di HP: BELUM DIUJI. |
+| Kondisi kode dan uji terakhir | `flutter analyze` → LULUS (0 issues). `flutter test` → LULUS (**14 test** — termasuk 3 test `data_layer` milik Orang 2). `flutter build apk --debug` → LULUS. `lib/main.dart` pernah tertimpa template counter oleh PR tim → **sudah dikembalikan** (staged, menunggu commit+push). Repo sekarang **git** (remote `github.com/aldiansyh13/CareerPath`). **Firebase OFF sementara** (`google-services.json` belum ada). Uji alur manual di HP: BELUM DIUJI. |
 | Pilihan integrasi Gemini | Jalur A (REST Gemini Developer API) diimplementasi: `lib/services/gemini_service.dart` membaca `.env` (`GEMINI_API_KEY`, `GEMINI_MODEL`), POST `generateContent`, `responseMimeType: application/json`, validasi 3 karier dari katalog/4 minggu/skor. `.env` placeholder dibuat lokal (gitignored), `.env.example` ditambahkan. Jalur B (Firebase AI Logic + App Check) BELUM, dicatat untuk APK distribusi. |
 | Hambatan / tindakan pemilik | Butuh akun/konsol: (1) Firebase Project + `flutterfire configure --project=<ID> --platforms=android` untuk menghasilkan `firebase_options.dart` & aktifkan Auth/Firestore+Rules, (2) AI Studio: buat API key proyek & pilih model Flash JSON, isi `.env`, (3) uji di emulator/HP (`flutter run`). Tanpa ini app berjalan mode lokal + contoh hasil; analisis AI & sinkron cloud tidak aktif. |
-| Tindakan berikut | **HP**: buka aplikasi "CareerPath AI" yang sudah terpasang → uji alur welcome→minat→skill→ringkasan→hasil contoh, catat hasil di HASIL-KERJA. **Orang 2/pemilik**: `flutterfire configure` (hasilkan `firebase_options.dart` + `google-services.json`), serahkan file ke repo, lalu aktifkan kembali `id("com.google.gms.google-services")` di `android/app/build.gradle.kts` dan ganti init `Firebase.initializeApp()` ke `DefaultFirebaseOptions.currentPlatform`. Orang 1 lanjut: ikon/splash, konsistensi copy. |
+| Tindakan berikut | **Commit+push restore** `lib/main.dart` (sudah staged): `git commit -m "Kembalikan main.dart CareerPath (tertimpa template counter)"` lalu `git push`. **HP**: jalankan lagi `flutter run` → uji alur welcome→minat→skill→ringkasan→hasil contoh, catat hasil di HASIL-KERJA. **Orang 2/pemilik**: `flutterfire configure` (hasilkan `firebase_options.dart` + `google-services.json`), lalu aktifkan kembali `id("com.google.gms.google-services")` dan ganti init ke `DefaultFirebaseOptions.currentPlatform`. Orang 1 lanjut: ikon/splash, konsistensi copy. |
 | Bukti selesai untuk tindakan berikut | Ada `firebase_options.dart`, akun uji muncul di Auth, dokumen `users/{uid}/assessments` muncul di Firestore, analisis AI mengembalikan JSON valid & tampil, riwayat terbuka tanpa panggil Gemini ulang; bukti dicatat di HASIL-KERJA. |
 
 ## Catatan pekerjaan
@@ -92,6 +92,22 @@ Tambahkan entri di bawah judul ID terkait. Buat judul stabil seperti `## L-02` s
 - Uji manual oleh manusia: **BELUM DIUJI** — buka aplikasi di HP, cek welcome/tampilan/label `CareerPath AI`, alur welcome→minat→skill→hasil contoh. Login/Firebase tidak aktif (google-services dinonaktifkan sementara).
 - Kendala, tindakan perbaikan dan yang tersisa: (1) `google-services.json` + aktifkan lagi plugin google-services (Orang 2/pemilik); (2) warning NDK 28.2.13676358 diminta plugin firebase — hanya warning, belum diubah (hindari unduhan NDK besar ke C: yang sisa 10,7 GB); (3) patch SDK Flutter bersifat lokal — bila Flutter di-upgrade, patch otomatis hilang (justru diinginkan) dan `android.newDsl=false`/`kotlin.incremental=false`/`@file:Suppress` sebaiknya dievaluasi ulang.
 - Gerbang blok dan butir To-Do yang diperbarui: tidak ada yang dicentang (butuh bukti uji manual alur di HP).
+
+### Sesi 2026-11-15 — `flutter run` gagal: `lib/main.dart` tertimpa template counter (repo kini git)
+
+- Waktu, nama/peran: 2026-11-15, Aldi (Orang 1) via agent; temuan saat user menjalankan `flutter run` di HP
+- Status: SELESAI
+- Temuan: `flutter run` gagal di compile Dart — `lib/main.dart` berisi **template counter bawaan Flutter** (import `package:material_ui` yang tidak ada di pubspec + sintaks Dart baru `.fromSeed`). Penyebab: commit **`56a3be1` "Setup firebase" (akun aldiansyh13, 14/11 20:33)** mengganti `main.dart` (kemungkinan sisa `flutter create`/template dari Flutter versi lebih baru di mesin lain) dan lolos ke main lewat **PR #1 (`800aa03`)**. **Repo sekarang git + remote `github.com/aldiansyh13/CareerPath`** (semua kerja sebelumnya — termasuk patch build — sudah ter-commit). File inti lain (screens, pubspec, android) utuh.
+- Perubahan nyata dan path file:
+  - `lib/main.dart`: dikembalikan dari `43eddd6` (`git checkout 43eddd6 -- lib/main.dart`) — versi CareerPath asli (entry gate, dotenv, `Firebase.initializeApp()` best-effort, `CareerPathApp` + Provider). **Kerja Orang 2 di commit itu tidak disentuh** (`firestore.rules`, `lib/services/auth_service.dart`, perubahan `app_backend.dart`/`auth_screen.dart`, `test/data_layer_test.dart` tetap ada).
+  - Catatan: perubahan sudah staged; user tinggal commit + push ke `origin` (branch yang dipakai tim).
+- Uji oleh agent — perintah, hasil aktual:
+  - `flutter analyze` → LULUS (No issues found)
+  - `flutter test` → LULUS (**14 test**: 11 lama + 3 `data_layer_test` milik Orang 2 — kompatibel dengan main.dart hasil restore)
+  - `flutter build apk --debug` → LULUS (46,4 dtk setelah `flutter clean`; warning `Invalid depfile` hilang)
+- Uji manual oleh manusia: MENUNGGU (user ulangi `flutter run` di HP)
+- Kendala, tindakan perbaikan dan yang tersisa: **Peringatan untuk tim**: jangan menjalankan `flutter create .` / menimpa `lib/main.dart` dengan template — selalu `git pull` dulu dan komunikasikan perubahan. Sisa: `google-services.json` + aktifkan plugin google-services (Orang 2).
+- Gerbang blok dan butir To-Do yang diperbarui: tidak ada yang dicentang.
 
 ### Template entri
 
