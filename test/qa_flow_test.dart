@@ -32,7 +32,7 @@ Future<void> _startAndFillProfile(WidgetTester tester) async {
 }
 
 Future<void> _answerAllInterests(WidgetTester tester) async {
-  for (final q in kInterestQuestions) {
+  for (final q in interestQuestionsForMajor('Informatika')) {
     final option = find.text(q.options.first);
     await tester.scrollUntilVisible(
       option,

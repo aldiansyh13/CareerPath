@@ -45,9 +45,20 @@ void expectInvalid(Map<String, dynamic> json, String reasonFragment) {
 
 void main() {
   group('Katalog & data tetap MVP', () {
-    test('katalog berisi 8 karier unik', () {
-      expect(kCareerCatalog.length, 8);
-      expect(kCareerCatalog.toSet().length, 8);
+    test('katalog berisi minimal 8 karier unik lintas jurusan', () {
+      expect(kCareerCatalog.length, greaterThanOrEqualTo(8));
+      expect(kCareerCatalog.toSet().length, kCareerCatalog.length);
+      expect(
+          kCareerCatalog,
+          containsAll(<String>[
+            'UI/UX Designer',
+            'Accountant',
+            'Financial Analyst',
+            'Teacher',
+            'Nurse',
+            'Legal Officer',
+            'Civil Engineer',
+          ]));
     });
 
     test('8 pertanyaan minat, masing-masing punya pilihan', () {
@@ -60,6 +71,23 @@ void main() {
     test('6 skill dengan id unik', () {
       expect(kSkillItems.length, 6);
       expect(kSkillItems.map((s) => s.id).toSet().length, 6);
+    });
+
+    test('pertanyaan mengikuti jurusan, bukan selalu IT', () {
+      final accounting = interestQuestionsForMajor('Akuntansi');
+      expect(accounting.length, 8);
+      final accountingText =
+          accounting.expand((q) => q.options).join(' ').toLowerCase();
+      expect(accountingText, contains('laporan keuangan'));
+      expect(accountingText, isNot(contains('pemrograman')));
+      expect(accountingText, isNot(contains('aplikasi')));
+
+      final it = interestQuestionsForMajor('Teknik Informatika');
+      final itText = it.expand((q) => q.options).join(' ').toLowerCase();
+      expect(itText, contains('pemrograman'));
+
+      final unknown = interestQuestionsForMajor('Jurusan Tidak Dikenal');
+      expect(unknown, same(kInterestQuestions));
     });
   });
 

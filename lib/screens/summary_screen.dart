@@ -30,6 +30,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
   Widget build(BuildContext context) {
     final p = context.watch<AssessmentProvider>();
     final profile = p.profile;
+    final questions = interestQuestionsForMajor(profile?.major);
     return Scaffold(
       appBar: AppBar(title: const Text('Ringkasan')),
       body: SafeArea(
@@ -57,7 +58,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                     .titleMedium
                     ?.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: 6),
-            ...kInterestQuestions.map((q) => ListTile(
+            ...questions.map((q) => ListTile(
                   dense: true,
                   contentPadding: EdgeInsets.zero,
                   title: Text(q.text),
