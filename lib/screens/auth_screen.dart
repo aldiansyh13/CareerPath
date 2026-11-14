@@ -1,6 +1,6 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+
+import '../services/auth_service.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -13,36 +13,18 @@ class _AuthScreenState extends State<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
+  final _auth = AuthService();
   bool _isLogin = true;
   bool _loading = false;
   String? _error;
 
-  bool get _firebaseReady => Firebase.apps.isNotEmpty;
+  bool get _firebaseReady => _auth.isReady;
 
   @override
   void dispose() {
     _email.dispose();
     _password.dispose();
     super.dispose();
-  }
-
-  String _friendlyError(FirebaseAuthException e) {
-    switch (e.code) {
-      case 'invalid-email':
-        return 'Format email tidak valid.';
-      case 'user-not-found':
-      case 'wrong-password':
-      case 'invalid-credential':
-        return 'Email atau kata sandi salah.';
-      case 'email-already-in-use':
-        return 'Email sudah terdaftar. Silakan masuk.';
-      case 'weak-password':
-        return 'Kata sandi terlalu lemah (minimal 6 karakter).';
-      case 'network-request-failed':
-        return 'Tidak ada koneksi internet. Coba lagi.';
-      default:
-        return 'Gagal autentikasi (${e.code}).';
-    }
   }
 
   Future<void> _submit() async {
@@ -56,16 +38,15 @@ class _AuthScreenState extends State<AuthScreen> {
       _error = null;
     });
     try {
-      final auth = FirebaseAuth.instance;
       if (_isLogin) {
-        await auth.signInWithEmailAndPassword(email: _email.text.trim(), password: _password.text);
+        await _auth.login(_email.text, _password.text);
       } else {
-        await auth.createUserWithEmailAndPassword(email: _email.text.trim(), password: _password.text);
+        await _auth.register(_email.text, _password.text);
       }
       if (mounted) Navigator.of(context).pop(true);
-    } on FirebaseAuthException catch (e) {
-      setState(() => _error = _friendlyError(e));
-    } catch (e) {
+    } on AuthFailure catch (e) {
+      setState(() => _error = e.message);
+    } catch (_) {
       setState(() => _error = 'Terjadi kesalahan. Coba lagi.');
     } finally {
       if (mounted) setState(() => _loading = false);
