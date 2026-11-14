@@ -1,3 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -5,7 +7,9 @@ import '../models/user_profile.dart';
 import '../providers/assessment_provider.dart';
 import '../services/app_backend.dart';
 import '../services/local_store.dart';
+import '../utils/constants.dart';
 import 'interest_screen.dart';
+import 'welcome_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final bool startAssessmentAfter;
@@ -63,6 +67,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  bool get _signedIn =>
+      Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null;
+
+  Future<void> _signOut() async {
+    final backend = AppBackend(LocalStore())..markFirebaseReady();
+    await backend.signOut();
+    if (!mounted) return;
+    context.read<AssessmentProvider>().resetAssessment(keepProfile: false);
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+      (r) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -104,6 +122,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onPressed: _saving ? null : _save,
                   child: _saving ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Simpan & lanjut'),
                 ),
+                if (_signedIn) ...[
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: _saving ? null : _signOut,
+                    icon: const Icon(Icons.logout),
+                    label: const Text('Keluar dari akun'),
+                    style: OutlinedButton.styleFrom(foregroundColor: AppColors.danger),
+                  ),
+                ],
               ],
             ),
           ),

@@ -346,7 +346,7 @@ Isi kolom status dan tempel ringkasan laporan (atau tautan ke berkas laporan di 
 | ID | Setelah tugas | Penanggung jawab | Waktu | Hasil uji | Ringkasan atau tautan |
 | --- | --- | --- | --- | --- | --- |
 | L-01 | Persiapan alat, repo, dan prompt di AI Studio |  |  |  |  |
-| L-02 | UI statis semua layar dengan data dummy |  |  |  |  |
+| L-02 | UI statis semua layar dengan data dummy | Aldi (A: Flutter UI) | 2026-11-14 | LULUS otomatis (`flutter analyze` + **11 widget test**, termasuk uji layar kecil 5"); uji HP: MENUNGGU | Detail: [L-02](HASIL-KERJA.md#l-02) (2 sesi: fix RadioGroup, fix overflow Welcome, tombol Keluar profil, nama app) |
 | L-03 | Firebase terpasang dan terinisialisasi |  |  |  |  |
 | L-04 | Login, daftar, keluar, sesi bertahan |  |  |  |  |
 | L-05 | Gemini terhubung ke alur asli | Faji (C) | 2026-11-14 | 26 test otomatis LULUS; live 11 panggilan sukses dengan `gemini-3.6-flash` | [L-05](HASIL-KERJA.md#l-05) — service/validator/anti-dobel + retry kontrak; 10 berturut-turut & alur UI belum terbukti |
