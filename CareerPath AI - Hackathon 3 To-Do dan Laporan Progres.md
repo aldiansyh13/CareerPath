@@ -115,7 +115,7 @@ Gerbang C: alur penuh berjalan di APK debug: daftar, profil, asesmen, hasil dari
 ### Blok D (jam 20–28): Stabilisasi dan istirahat
 
 - [ ] Bagi shift istirahat minimal 4–5 jam per orang (anggota yang kurang tidur membuat bug dan salah demo)
-- [ ] &#91;Must\] D: jalankan 5 skenario uji dan checklist QA di bagian 3, catat bug di tabel bug
+- [ ] &#91;Must\] D: jalankan 5 skenario uji dan checklist QA di bagian 3, catat bug di tabel bug — **PARSIAL**: uji otomatis & bug log selesai, 5 skenario AI/HP **MENUNGGU** jaringan & cloud ([L-08](HASIL-KERJA.md#l-08)).
 - [ ] &#91;Must\] C: perbaiki prompt berdasarkan hasil uji (kualitas alasan, format JSON, konsistensi skor)
 - [ ] &#91;Must\] A: perbaiki bug UI yang paling terlihat (overflow, teks terpotong, tombol tidak aktif)
 - [ ] &#91;Must\] B: uji aturan Firestore (pengguna A tidak bisa membaca data pengguna B)
@@ -131,15 +131,15 @@ Gerbang D: 5 skenario uji menghasilkan hasil masuk akal dan tidak crash.
 - [ ] &#91;Could\] Google Sign-In (hanya jika SHA-1 sudah dipahami dan blok D bersih)
 - [ ] &#91;Could\] Grafik radar minat atau kartu hasil yang bisa dibagikan
 - [ ] &#91;Must\] Ikon dan nama aplikasi, splash, disclaimer di halaman hasil
-- [ ] &#91;Must\] Hapus `print`, jalankan `flutter analyze`
+- [x] &#91;Must\] Hapus `print`, jalankan `flutter analyze` — **LULUS**: tidak ada `print` di `lib/`; 0 error, 0 warning, 23 info (16 deprecation `material.dart`, 7 `avoid_print` hanya di alat QA `tool/`). Bukti: [L-08](HASIL-KERJA.md#l-08).
 - [ ] &#91;Must\] Isi Laporan **L-09**
 
 Gerbang E: aplikasi terlihat rapi dan ada minimal satu hal "wow" yang bisa ditunjukkan.
 
 ### Blok F (jam 38–44): Build rilis dan uji akhir
 
-- [ ] &#91;Must\] Pastikan izin `INTERNET` ada di `AndroidManifest.xml` utama
-- [ ] &#91;Must\] `flutter build apk --release`, install ke minimal 2 HP
+- [x] &#91;Must\] Pastikan izin `INTERNET` ada di `AndroidManifest.xml` utama — **LULUS** (diperiksa 2026-11-14, [L-08](HASIL-KERJA.md#l-08)).
+- [ ] &#91;Must\] `flutter build apk --release`, install ke minimal 2 HP — **TERHAMBAT**: build gagal karena `google-services.json` tidak ada + cache Kotlin; APK belum dihasilkan ([L-10](HASIL-KERJA.md#l-10)).
 - [ ] &#91;Must\] Jalankan seluruh checklist QA di bagian 3 pada APK rilis
 - [ ] &#91;Must\] D: selesaikan slide (maksimal 7), naskah demo, dan rekam video demo cadangan
 - [ ] &#91;Must\] Code freeze setelah jam 44: tidak ada fitur baru, hanya perbaikan bug fatal
@@ -169,6 +169,8 @@ Centang daftar ini di blok D, lalu ulangi seluruhnya di blok F pada APK rilis (b
 | 4 | Semua skill dinilai 1 | Hasil tetap tampil dan masuk akal, roadmap fokus pada dasar |
 | 5 | Semua skill dinilai 5 | Skor tidak semua 100, hasil tetap bervariasi |
 
+> Status 2026-11-14 (D): kelima skenario sudah disiapkan sebagai input sintetis di `tool/qa_live_gemini.dart`, tetapi eksekusi live **BELUM LULUS** karena endpoint `generativelanguage.googleapis.com` tidak terjangkau dari lingkungan QA (timeout; domain lain normal). Jalankan ulang dari jaringan/HP pemilik, lalu catat hasil di [L-08](HASIL-KERJA.md#l-08). Jangan centang sebelum ada hasil nyata.
+
 ### 3.2 Pengecekan login dan Firebase
 
 - [ ] Daftar dengan email baru berhasil dan akun muncul di Authentication pada konsol Firebase
@@ -188,10 +190,10 @@ Centang daftar ini di blok D, lalu ulangi seluruhnya di blok F pada APK rilis (b
 - [ ] Semua 8 pertanyaan minat dan 6 skill bisa dijawab, progress bar bergerak
 - [ ] Tombol kembali tidak menghapus jawaban yang sudah diisi
 - [ ] Tombol "Analisis dengan AI" memunculkan layar loading
-- [ ] Hasil menampilkan 3 kartu dengan skor 0–100 yang masuk akal
-- [ ] Layar detail menampilkan alasan, skill dimiliki, skill kurang, dan roadmap 4 minggu
-- [ ] Hasil baru muncul di riwayat dan bisa dibuka tanpa memanggil Gemini lagi
-- [ ] Tombol "Ulangi asesmen" mengosongkan jawaban lama
+- [x] Hasil menampilkan 3 kartu dengan skor 0–100 yang masuk akal — **LULUS** uji widget lokal ([L-08](HASIL-KERJA.md#l-08)).
+- [x] Layar detail menampilkan alasan, skill dimiliki, skill kurang, dan roadmap 4 minggu — **LULUS** uji widget lokal ([L-08](HASIL-KERJA.md#l-08)).
+- [x] Hasil baru muncul di riwayat dan bisa dibuka tanpa memanggil Gemini lagi — **LULUS untuk mode lokal**; sinkron cloud **MENUNGGU** Firebase ([L-08](HASIL-KERJA.md#l-08)).
+- [x] Tombol "Ulangi asesmen" mengosongkan jawaban lama — **LULUS** uji widget lokal ([L-08](HASIL-KERJA.md#l-08)).
 
 ### 3.4 Pengecekan AI
 
@@ -214,11 +216,11 @@ Centang daftar ini di blok D, lalu ulangi seluruhnya di blok F pada APK rilis (b
 
 ### 3.6 Pengecekan keamanan dan repo
 
-- [ ] `.env` ada di `.gitignore` dan tidak ada di riwayat commit (`git log -- .env`)
-- [ ] Tidak ada API key Gemini di kode, README, slide, atau video demo
-- [ ] Jika key pernah ter-commit: buat key baru dan hapus yang lama di AI Studio
-- [ ] Izin `INTERNET` ada di `AndroidManifest.xml` utama
-- [ ] README menjelaskan cara membuat `.env` dan cara menghubungkan proyek Firebase
+- [x] `.env` ada di `.gitignore` dan tidak ada di riwayat commit (`git log -- .env`) — **LULUS** (`git check-ignore` cocok, `git ls-files -- .env` & log kosong; [L-08](HASIL-KERJA.md#l-08)).
+- [x] Tidak ada API key Gemini di kode, README, slide, atau video demo — **LULUS** (pola key tidak ditemukan; `firebase_options.dart` hanya client key Firebase, bukan Gemini; [L-08](HASIL-KERJA.md#l-08)).
+- [x] Jika key pernah ter-commit: buat key baru dan hapus yang lama di AI Studio — **TIDAK BERLAKU**: `.env` tidak pernah masuk riwayat commit.
+- [x] Izin `INTERNET` ada di `AndroidManifest.xml` utama — **LULUS** ([L-08](HASIL-KERJA.md#l-08)).
+- [x] README menjelaskan cara membuat `.env` dan cara menghubungkan proyek Firebase — **LULUS** ([README](README.md#konfigurasi-env-gemini)); tangkapan layar masih kosong.
 
 ### 3.7 Kesiapan demo
 
@@ -352,9 +354,9 @@ Isi kolom status dan tempel ringkasan laporan (atau tautan ke berkas laporan di 
 | L-05 | Gemini terhubung ke alur asli |  |  |  |  |
 | L-06 | Alur lengkap dari login sampai hasil |  |  |  |  |
 | L-07 | Riwayat tersimpan di Firestore |  |  |  |  |
-| L-08 | Stabilisasi dan perbaikan bug |  |  |  |  |
+| L-08 | Stabilisasi dan perbaikan bug | Sabrina (D) | 2026-11-14 | LULUS parsial: 0 error/0 warning, 27/27 uji otomatis; AI live & cloud MENUNGGU | [L-08](HASIL-KERJA.md#l-08) |
 | L-09 | Fitur pembeda dan polish |  |  |  |  |
-| L-10 | Build rilis dan kondisi akhir |  |  |  |  |
+| L-10 | Build rilis dan kondisi akhir | Sabrina (D) | 2026-11-14 | TERHAMBAT: `google-services.json` tidak ada; APK belum dihasilkan | [L-10](HASIL-KERJA.md#l-10) |
 
 ### 4.5 Kegunaan laporan
 
