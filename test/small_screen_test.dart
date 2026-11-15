@@ -6,7 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:careerpath_ai/data/sample_result.dart';
 import 'package:careerpath_ai/models/user_profile.dart';
 import 'package:careerpath_ai/providers/assessment_provider.dart';
-import 'package:careerpath_ai/screens/auth_screen.dart';
 import 'package:careerpath_ai/screens/career_detail_screen.dart';
 import 'package:careerpath_ai/screens/home_screen.dart';
 import 'package:careerpath_ai/screens/interest_screen.dart';
@@ -67,14 +66,8 @@ void main() {
     await scrollTo(tester, find.text('Mulai asesmen'));
     await expectNoOverflow(tester);
     expect(find.text('Mulai asesmen'), findsOneWidget);
-    expect(find.text('Masuk / Daftar'), findsOneWidget);
+    expect(find.text('Masuk / Daftar'), findsNothing);
     expect(find.text('Jelajahi contoh hasil (offline)'), findsOneWidget);
-  });
-
-  testWidgets('Auth aman di layar kecil', (tester) async {
-    await pumpSmall(tester, const AuthScreen());
-    await expectNoOverflow(tester);
-    expect(find.text('Masuk'), findsWidgets);
   });
 
   testWidgets('Profil aman di layar kecil', (tester) async {
@@ -211,5 +204,8 @@ void main() {
     );
     await expectNoOverflow(tester);
     expect(find.text('Riwayat hasil'), findsOneWidget);
+    expect(find.byTooltip('Masuk'), findsNothing);
+    expect(find.byTooltip('Keluar'), findsNothing);
+    expect(find.textContaining('login'), findsNothing);
   });
 }

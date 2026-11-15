@@ -1,5 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -9,12 +7,10 @@ import '../providers/assessment_provider.dart';
 import '../providers/journey_provider.dart';
 import '../services/app_backend.dart';
 import '../services/local_store.dart';
-import 'auth_screen.dart';
 import 'career_detail_screen.dart';
 import 'interest_screen.dart';
 import 'profile_screen.dart';
 import 'result_screen.dart';
-import 'welcome_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -33,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<List<AssessmentRecord>> _loadHistory() async {
-    final backend = AppBackend(LocalStore())..markFirebaseReady();
+    final backend = AppBackend(LocalStore());
     return backend.getHistory();
   }
 
@@ -45,24 +41,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _signOut() async {
-    final backend = AppBackend(LocalStore())..markFirebaseReady();
-    await backend.signOut();
-    if (mounted) {
-      await context.read<JourneyProvider?>()?.switchStore(LocalStore());
-      if (!mounted) return;
-      context.read<AssessmentProvider>().resetAssessment(keepProfile: false);
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-        (r) => false,
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final fbReady = Firebase.apps.isNotEmpty;
-    final user = fbReady ? FirebaseAuth.instance.currentUser : null;
     final journeyProvider = context.watch<JourneyProvider?>();
     final journey = journeyProvider?.activeJourney;
     return Scaffold(
@@ -73,24 +53,6 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: _refresh,
               icon: const Icon(Icons.refresh),
               tooltip: 'Muat ulang'),
-          if (user != null)
-            IconButton(
-                onPressed: _signOut,
-                icon: const Icon(Icons.logout),
-                tooltip: 'Keluar')
-          else
-            IconButton(
-              onPressed: () async {
-                await Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const AuthScreen(),
-                  ),
-                );
-                _refresh();
-              },
-              icon: const Icon(Icons.login),
-              tooltip: 'Masuk',
-            ),
         ],
       ),
       body: SafeArea(
@@ -119,9 +81,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               .titleMedium
                               ?.copyWith(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 6),
-                      Text(user != null
-                          ? 'Masuk sebagai ${user.email}'
-                          : 'Mode lokal (login opsional untuk sinkron riwayat cloud).'),
+                      const Text(
+                          'Profil dan riwayat tersimpan di perangkat ini.'),
                       const SizedBox(height: 12),
                       FilledButton.icon(
                         onPressed: () async {

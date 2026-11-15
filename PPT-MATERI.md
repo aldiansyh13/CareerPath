@@ -1,10 +1,11 @@
-# CareerPath AI — Materi Lengkap untuk PPT
+# CareerPath AI — Materi Lengkap untuk PPT (Versi Tanpa Firebase)
 
-Dokumen ini merancang isi slide presentasi (13 slide) dari aplikasi **CareerPath AI**, disusun dari `README.md`, `PRODUCT.md`, PRD, dan `PITCH-DEMO.md`. Naskah pitch 3 menit + demo tetap merujuk ke `PITCH-DEMO.md`.
+Dokumen ini merancang isi slide presentasi (13 slide) dari aplikasi **CareerPath AI** — **dalam mode lokal: tanpa login, tanpa Firebase Auth/Firestore**. Data disimpan di perangkat (`shared_preferences`). Naskah pitch 3 menit + demo tetap merujuk ke `PITCH-DEMO.md` (bagian yang menyebut akun demo/login **dihapus saat presentasi**).
 
 **Aturan isi sebelum diekspor ke PowerPoint/Canva:**
 
-- Jangan menaruh API key, isi `.env`, sandi, atau email akun demo di slide.
+- Jangan menaruh API key, isi `.env`, atau sandi di slide.
+- **Jangan menyebut login, akun, Firebase Auth, Firestore, atau sinkronisasi cloud** — aplikasi dipresentasikan sebagai mode lokal penuh.
 - Angka hanya yang terbukti (lihat `HASIL-KERJA.md`); placeholder `[...]` wajib diisi tim dengan data asli — jangan mengarang.
 - Screenshot harus tangkapan layar asli; jika memakai data contoh, tampilkan label *“Contoh hasil (offline)”*.
 
@@ -55,29 +56,29 @@ Dokumen ini merancang isi slide presentasi (13 slide) dari aplikasi **CareerPath
 
 ## Slide 5 — Fitur Utama
 
-- **Auth email & kata sandi** (Firebase Auth) — sesi bertahan, tanpa Firebase tetap jalan mode lokal
-- **Profil** — nama, jurusan, semester (validasi 1–14)
+- **Langsung pakai tanpa login** — buka aplikasi → mulai asesmen; tanpa registrasi, tanpa data akun di server
+- **Profil** — nama, jurusan, semester (validasi 1–14), disimpan di perangkat
 - **Asesmen minat** — 8 pertanyaan pilihan ganda + progress bar
 - **Penilaian skill** — 6 slider nilai 1–5
 - **Ringkasan & persetujuan** — tinjau jawaban, cegah submit ganda
 - **Analisis AI (Gemini REST)** — JSON tervalidasi: tepat 3 karier dari 8 katalog, skor 0–100, alasan berbasis jawaban, skill gap, roadmap 4 minggu
 - **Hasil & detail** — 3 kartu, disclaimer, skill dimiliki/kurang, roadmap
 - **Career Journey** — pilih 1 fokus karier, checklist roadmap 30 hari, progres tersimpan
-- **Riwayat** — buka hasil lama tanpa panggilan AI baru
+- **Riwayat di perangkat** — buka hasil lama tanpa panggilan AI baru
 - **Fallback** — hasil contoh offline berlabel jelas bila AI gagal
 
 ---
 
 ## Slide 6 — Cara Kerja (Arsitektur)
 
-**Diagram:** Pengguna → Aplikasi Flutter → Firebase Auth/Firestore + Gemini (REST) → Hasil tervalidasi & tersimpan
+**Diagram:** Pengguna → Aplikasi Flutter → Penyimpanan lokal (`shared_preferences`) + Gemini (REST) → Hasil tervalidasi & tersimpan di perangkat
 
 Poin pendukung:
 
 - Gemini dipaksa mengeluarkan JSON (`responseMimeType: application/json`); aplikasi **memvalidasi** struktur sebelum tampil: tepat 3 karier dari katalog 8, skor 0–100, roadmap 4 minggu.
 - Rotasi model otomatis saat HTTP 404/429; fallback OpenAI; terakhir fallback contoh offline.
-- Data: profil `users/{uid}`, hasil `users/{uid}/assessments/{id}` — aturan Firestore per-UID.
-- Riwayat dibuka dari penyimpanan lokal/Firestore tanpa memanggil Gemini lagi.
+- Profil, jawaban, hasil, riwayat, dan progres journey **hanya tersimpan di perangkat** — tidak ada server yang menampung data pengguna.
+- Riwayat dibuka dari penyimpanan lokal tanpa memanggil Gemini lagi; aplikasi tetap berguna tanpa internet (hasil contoh + riwayat).
 
 ---
 
@@ -85,11 +86,12 @@ Poin pendukung:
 
 **Urutan alur (slide pengingat saat demo langsung di HP):**
 
-Welcome → Masuk (akun demo) → Profil → Mulai Asesmen → 8 pertanyaan minat → 6 slider skill → Ringkasan + persetujuan → Analisis → 3 kartu hasil → Detail roadmap → Riwayat
+Welcome → **Mulai asesmen** (tanpa login) → Profil → 8 pertanyaan minat → 6 slider skill → Ringkasan + persetujuan → Analisis → 3 kartu hasil → Detail roadmap → Riwayat
 
 - Target waktu analisis: < 15 detik (kondisi normal).
 - Tunjukkan progress bar, skor yang bervariasi, dan alasan yang merujuk jawaban.
 - Jika AI gagal: tekan **“Gunakan contoh hasil (tanpa AI)”** dan katakan terus terang itu contoh.
+- Tunjukkan riwayat terbuka kembali setelah aplikasi ditutup → bukti data bertahan di perangkat.
 
 ---
 
@@ -110,11 +112,13 @@ Welcome → Masuk (akun demo) → Profil → Mulai Asesmen → 8 pertanyaan mina
 | --- | --- |
 | Framework | Flutter (Dart), Material 3, Android 7.0+ |
 | State management | Provider |
-| Auth & database | Firebase Authentication + Cloud Firestore |
-| Penyimpanan lokal | shared_preferences (mode lokal & cache riwayat) |
+| Penyimpanan lokal | `shared_preferences` — profil, riwayat, progres journey |
 | AI utama | Gemini API (REST, JSON terstruktur, rotasi model) |
 | AI cadangan | OpenAI Responses API (Structured Outputs, `store: false`) |
 | Bahasa antarmuka | Bahasa Indonesia |
+| Kebutuhan | Internet saat analisis; riwayat & fallback tetap jalan offline |
+
+**Sudut pandang positif untuk dijual:** arsitektur lokal-first = sederhana, cepat, hemat infrastruktur, dan **privasi by design** (data tidak meninggalkan perangkat).
 
 ---
 
@@ -130,9 +134,9 @@ Welcome → Masuk (akun demo) → Profil → Mulai Asesmen → 8 pertanyaan mina
 
 **Jujur — belum/belum tuntas:**
 
-- Build rilis `google-services.json` belum tersedia → APK rilis terhambat
 - 5 skenario AI live **0/5** — terkendala HTTP 429 kuota key (didahului 503/timeout)
-- Belum ada uji 2 HP & verifikasi aturan Firestore dua akun (butuh akses cloud)
+- Build rilis APK belum final
+- Belum ada uji lintas perangkat (pindah HP = data tidak ikut, karena memang lokal)
 
 ---
 
@@ -140,20 +144,21 @@ Welcome → Masuk (akun demo) → Profil → Mulai Asesmen → 8 pertanyaan mina
 
 - Rekomendasi adalah **saran awal, bukan keputusan/jaminan karier** (disclaimer tampil di aplikasi).
 - Output dibatasi 8 katalog + validasi JSON → mencegah AI “mengarang” karier liar.
-- API key masih di sisi klien untuk **demo tertutup**; belum ada backend produksi/App Check.
+- **Data hanya di perangkat:** hapus aplikasi = data ikut hilang; tidak ada cadangan cloud (sengaja untuk privasi MVP).
 - Analisis butuh internet + kuota API; tersedia fallback hasil contoh offline berlabel.
+- API key masih di sisi klien untuk demo; untuk rilis publik key dipindah ke backend.
 - Belum ada bukti pengguna nyata/testimoni — klaim hanya pada yang teruji.
 
 ---
 
 ## Slide 12 — Rencana Lanjutan (Roadmap Produk)
 
-1. **Keamanan:** backend aman (Cloud Functions / Firebase AI Logic) + App Check untuk APK publik
-2. **Akun:** Google Sign-In, verifikasi email
-3. **Fitur:** analisis CV, rekomendasi kursus/sumber belajar, pelacakan progres skill, grafik minat
+1. **Keamanan rilis:** pindahkan panggilan AI ke backend agar API key aman
+2. **Opsi akun & sinkronisasi (opsional):** login + cadangan cloud untuk pengguna yang mau, tetap ada mode lokal
+3. **Fitur:** analisis CV, rekomendasi kursus/sumber belajar, grafik minat, kartu hasil bisa dibagikan
 4. **Konsultasi:** chat karier berkonteks hasil asesmen
 5. **Validasi & kemitraan:** uji bersama konselor karier kampus, kemitraan career center
-6. **Ekspansi:** iOS, notifikasi, kartu hasil bisa dibagikan
+6. **Ekspansi:** iOS, notifikasi, ekspor/impor riwayat antar perangkat
 
 ---
 
@@ -165,14 +170,28 @@ Welcome → Masuk (akun demo) → Profil → Mulai Asesmen → 8 pertanyaan mina
 
 ---
 
-## Lampiran A — Naskah 3 Menit & Demo
+## Lampiran A — Jawaban Q&A yang Sering Muncul (tanpa Firebase)
 
-Gunakan bagian 2–3 di [`PITCH-DEMO.md`](PITCH-DEMO.md) (naskah per 3 pembicara + skenario 11 langkah demo). Peran: 1 operator HP, 1 narator, 2 penjawab teknis.
+| Pertanyaan | Poin jawaban |
+| --- | --- |
+| Kenapa tidak pakai login/database cloud? | Fokus MVP pada kualitas rekomendasi & roadmap. Mode lokal = tanpa gesekan registrasi, privasi by design, dan tidak butuh infrastruktur. Cloud bisa ditambahkan belakangan tanpa mengubah alur inti. |
+| Kalau ganti HP, data hilang? | Ya, data memang hanya di perangkat (jujur). Rencana lanjutan: ekspor/impor atau opsi sinkronisasi. |
+| Seberapa akurat rekomendasinya? | Saran awal, bukan keputusan. Output dibatasi 8 katalog, divalidasi struktur/skor/roadmap, diuji 27/27 otomatis. Validasi konselor = rencana lanjutan. |
+| Bedanya dengan tes karier biasa? | Tes berhenti di label; kami beri skill gap + roadmap 4 minggu yang bisa langsung dikerjakan. |
+| Bagaimana jika AI salah/mengarang? | Pilihan dibatasi 8 karier, output wajib JSON dan divalidasi, alasan merujuk jawaban, ada disclaimer; respons tidak valid ditolak. |
+| Privasi data pengguna? | Jawaban asesmen hanya diproses untuk analisis dan **disimpan di perangkat**; tidak ada server penyimpan data pengguna. |
+| Apa yang belum selesai? | Uji AI live terkendala kuota key (429); build rilis belum final; uji lintas perangkat tidak relevan untuk mode lokal. |
+| Bagaimana keberlanjutan? | Kemitraan career center kampus, versi premium (konsultasi, pelacakan progres), analisis CV. |
 
-## Lampiran B — Checklist Pra-Ekspor
+## Lampiran B — Naskah 3 Menit & Demo
+
+Merujuk bagian 2–3 [`PITCH-DEMO.md`](PITCH-DEMO.md) dengan **penyesuaian**: hapus langkah “Masuk dengan akun demo” — mulai langsung dari Welcome → Mulai asesmen. Peran: 1 operator HP, 1 narator, 2 penjawab teknis.
+
+## Lampiran C — Checklist Pra-Ekspor
 
 - [ ] Slide ≤ jumlah yang diizinkan panitia; periksa bebas API key/`.env`/sandi
+- [ ] Tidak ada penyebutan login/akun/Firebase/Firestore di slide mana pun
 - [ ] Placeholder `[n]`, `[x]%`, `[y]%` diisi data survei asli atau slide masalah disederhanakan
-- [ ] Screenshot asli: Welcome, 3 kartu hasil, detail roadmap, Career Journey
+- [ ] Screenshot asli: Welcome, 3 kartu hasil, detail roadmap, Career Journey, riwayat
 - [ ] Semua klaim angka cocok dengan `HASIL-KERJA.md`
-- [ ] Latihan pitch 2× dengan timer; siapkan Plan B (fallback, hotspot, HP cadangan)
+- [ ] Latihan pitch 2× dengan timer; siapkan Plan B (fallback contoh, hotspot, HP cadangan)
