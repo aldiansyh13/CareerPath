@@ -163,11 +163,11 @@ const Map<String, dynamic> kSampleInput = {
     'q8': 'Punya portofolio desain/prototipe yang kuat',
   },
   'skills': {
-    'logic': 3,
-    'design': 4,
-    'data': 2,
-    'communication': 4,
-    'coding': 2,
-    'leadership': 3,
+    'it_problem_solving': 3,
+    'it_coding': 2,
+    'it_data': 2,
+    'it_system': 3,
+    'it_debugging': 3,
+    'it_collaboration': 4,
   }
 };

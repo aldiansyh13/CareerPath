@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:careerpath_ai/data/careers.dart';
+import 'package:careerpath_ai/data/major_groups.dart';
 import 'package:careerpath_ai/data/questions.dart';
 import 'package:careerpath_ai/data/sample_result.dart';
 import 'package:careerpath_ai/data/skills.dart';
@@ -88,6 +89,52 @@ void main() {
 
       final unknown = interestQuestionsForMajor('Jurusan Tidak Dikenal');
       expect(unknown, same(kInterestQuestions));
+    });
+
+    test('pertanyaan dan skill mengikuti sembilan kelompok jurusan', () {
+      final cases = <String, (MajorGroup, String)>{
+        'Teknik Informatika': (MajorGroup.it, 'pemrograman'),
+        'Akuntansi': (MajorGroup.accounting, 'laporan keuangan'),
+        'Keperawatan': (MajorGroup.health, 'pasien'),
+        'Ilmu Hukum': (MajorGroup.law, 'hukum'),
+        'Pendidikan Guru Sekolah Dasar': (MajorGroup.education, 'mengajar'),
+        'Psikologi': (MajorGroup.psychology, 'konseling'),
+        'Desain Komunikasi Visual': (MajorGroup.communication, 'konten'),
+        'Teknik Sipil': (MajorGroup.engineering, 'teknik'),
+        'Manajemen Bisnis': (MajorGroup.business, 'bisnis'),
+      };
+
+      for (final entry in cases.entries) {
+        final questions = interestQuestionsForMajor(entry.key);
+        final skills = skillItemsForMajor(entry.key);
+        final searchable = [
+          ...questions.map((question) => question.text),
+          ...questions.expand((question) => question.options),
+          ...skills.map((skill) => skill.label),
+          ...skills.map((skill) => skill.hint),
+        ].join(' ').toLowerCase();
+
+        expect(majorGroupForMajor(entry.key), entry.value.$1,
+            reason: entry.key);
+        expect(questions, hasLength(8), reason: entry.key);
+        expect(skills, hasLength(6), reason: entry.key);
+        expect(skills.map((skill) => skill.id).toSet(), hasLength(6),
+            reason: entry.key);
+        expect(searchable, contains(entry.value.$2), reason: entry.key);
+      }
+    });
+
+    test('resolver memprioritaskan jurusan spesifik dan fallback umum', () {
+      expect(majorGroupForMajor('  KOMPUTERISASI AKUNTANSI  '),
+          MajorGroup.accounting);
+      expect(majorGroupForMajor(''), MajorGroup.general);
+      expect(majorGroupForMajor('Jurusan Tidak Dikenal'), MajorGroup.general);
+      expect(skillItemsForMajor('Jurusan Tidak Dikenal'), same(kSkillItems));
+      final fallbackText = kSkillItems
+          .expand((skill) => [skill.label, skill.hint])
+          .join(' ')
+          .toLowerCase();
+      expect(fallbackText, isNot(contains('pemrograman')));
     });
   });
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../data/skills.dart';
 import '../providers/assessment_provider.dart';
 import '../widgets/progress_header.dart';
 import 'summary_screen.dart';
@@ -12,10 +11,10 @@ class SkillScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AssessmentProvider>();
-    final rated = kSkillItems
-        .where((s) => provider.skillRatings.containsKey(s.id))
-        .length;
-    final allDone = rated == kSkillItems.length;
+    final skills = provider.activeSkills;
+    final rated =
+        skills.where((s) => provider.skillRatings.containsKey(s.id)).length;
+    final allDone = rated == skills.length;
     return Scaffold(
       appBar: AppBar(title: const Text('Skill')),
       body: SafeArea(
@@ -26,17 +25,17 @@ class SkillScreen extends StatelessWidget {
               child: ProgressHeader(
                 title: 'Penilaian Skill',
                 subtitle:
-                    'Nilai kemampuanmu saat ini (1 = pemula, 5 = mahir). $rated/${kSkillItems.length} terisi.',
-                progress: rated / kSkillItems.length,
+                    'Nilai kemampuanmu saat ini (1 = pemula, 5 = mahir). $rated/${skills.length} terisi.',
+                progress: rated / skills.length,
               ),
             ),
             Expanded(
               child: ListView.separated(
                 padding: const EdgeInsets.all(16),
-                itemCount: kSkillItems.length,
+                itemCount: skills.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, i) {
-                  final s = kSkillItems[i];
+                  final s = skills[i];
                   final value = provider.skillRatings[s.id] ?? 3;
                   final isSet = provider.skillRatings.containsKey(s.id);
                   return Card(

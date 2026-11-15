@@ -38,7 +38,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _refresh() {
-    if (mounted) setState(() => _historyFuture = _loadHistory());
+    if (mounted) {
+      setState(() {
+        _historyFuture = _loadHistory();
+      });
+    }
   }
 
   Future<void> _signOut() async {

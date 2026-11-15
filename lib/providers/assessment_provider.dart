@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../data/major_groups.dart';
+import '../data/skills.dart';
 import '../models/user_profile.dart';
 
 class AssessmentProvider extends ChangeNotifier {
@@ -10,14 +12,16 @@ class AssessmentProvider extends ChangeNotifier {
   UserProfile? get profile => _profile;
   Map<String, String> get interestAnswers => Map.unmodifiable(_interestAnswers);
   Map<String, int> get skillRatings => Map.unmodifiable(_skillRatings);
+  List<SkillItem> get activeSkills => skillItemsForMajor(_profile?.major);
 
   void setProfile(UserProfile profile) {
-    final previousMajor = _profile?.major.trim().toLowerCase();
-    final nextMajor = profile.major.trim().toLowerCase();
-    // Pertanyaan minat mengikuti jurusan, jadi jawaban lama tidak boleh
-    // dipakai ulang saat jurusan berubah.
-    if (previousMajor != nextMajor) {
+    final previousGroup = majorGroupForMajor(_profile?.major);
+    final nextGroup = majorGroupForMajor(profile.major);
+    // Pertanyaan dan skill mengikuti bidang jurusan, jadi jawaban lama tidak
+    // boleh dipakai ulang ketika pengguna berpindah bidang.
+    if (_profile != null && previousGroup != nextGroup) {
       _interestAnswers.clear();
+      _skillRatings.clear();
     }
     _profile = profile;
     notifyListeners();
@@ -34,7 +38,8 @@ class AssessmentProvider extends ChangeNotifier {
   }
 
   bool get interestsComplete => _interestAnswers.length >= 8; // expects 8 ids
-  bool get skillsComplete => _skillRatings.length >= 6;
+  bool get skillsComplete =>
+      activeSkills.every((skill) => _skillRatings.containsKey(skill.id));
 
   bool interestsCompleteFor(Set<String> ids) =>
       ids.every(_interestAnswers.containsKey);
@@ -46,6 +51,9 @@ class AssessmentProvider extends ChangeNotifier {
       'profile': _profile?.toJson(),
       'interests': Map<String, String>.from(_interestAnswers),
       'skills': Map<String, int>.from(_skillRatings),
+      'skill_labels': <String, String>{
+        for (final skill in activeSkills) skill.id: skill.label,
+      },
     };
   }
 

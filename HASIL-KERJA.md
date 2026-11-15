@@ -315,8 +315,14 @@ Tambahkan entri di bawah judul ID terkait. Buat judul stabil seperti `## L-02` s
 - Verifikasi akhir agent:
   - `dart format lib test` → LULUS.
   - `flutter analyze --no-pub` → LULUS, `No issues found`.
-  - `flutter test --concurrency=1 --no-pub` → LULUS **112/112**.
+  - `flutter test --concurrency=1 --no-pub` → LULUS **115/115** setelah fix pass review.
   - Small-screen suite 320×568 tetap lulus tanpa overflow.
 - Belum diverifikasi: screenshot emulator/perangkat, gesture Android di HP, Firebase login A/B nyata, dan build APK setelah perubahan ini. `flutter devices` tidak menghasilkan perangkat yang dapat dipakai pada sesi ini.
 - Sengaja ditunda setelah hackathon: skill check-in 1–5, grafik perkembangan skill, multi-journey archive, sinkronisasi progress ke Firestore, notifikasi, gamifikasi, dan AI mentor.
 - Dokumen keputusan: `PRODUCT.md`, `docs/superpowers/specs/2026-11-15-career-journey-hackathon-design.md`, dan `docs/superpowers/plans/2026-11-15-career-journey.md`.
+- Fix pass hasil review fresh-context:
+  - login/logout dari Welcome, Beranda, maupun Profil kini mengganti namespace journey sesuai UID/tamu;
+  - rekomendasi aktif dikenali dengan assessment ID + judul, bukan judul saja;
+  - gagal simpan melakukan rollback optimistic state dan menampilkan recovery message;
+  - setiap snackbar Undo membawa token assessment/action sendiri sehingga toggle beruntun tidak saling membatalkan;
+  - tes tambahan mencakup pergantian store akun, rekomendasi berjudul sama dari assessment berbeda, rollback simpan, dan undo beruntun.

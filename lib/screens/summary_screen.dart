@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../data/questions.dart';
-import '../data/skills.dart';
 import '../providers/assessment_provider.dart';
 import 'analyzing_screen.dart';
 
@@ -31,6 +30,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
     final p = context.watch<AssessmentProvider>();
     final profile = p.profile;
     final questions = interestQuestionsForMajor(profile?.major);
+    final skills = p.activeSkills;
     return Scaffold(
       appBar: AppBar(title: const Text('Ringkasan')),
       body: SafeArea(
@@ -71,7 +71,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                     .titleMedium
                     ?.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: 6),
-            ...kSkillItems.map((s) => ListTile(
+            ...skills.map((s) => ListTile(
                   dense: true,
                   contentPadding: EdgeInsets.zero,
                   title: Text(s.label),

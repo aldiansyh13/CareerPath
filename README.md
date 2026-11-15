@@ -109,7 +109,7 @@ dart run tool/qa_live_gemini.dart   # butuh .env + akses ke endpoint Gemini
 dart run tool/qa_live_openai.dart    # uji live cadangan OpenAI (butuh kredit akun)
 ```
 
-> Jika `flutter test` menggantung saat mengambil dependensi (jaringan pub.dev lambat), jalankan `flutter test --concurrency=1 --no-pub` setelah `flutter pub get` pernah berhasil. Pemeriksaan terbaru menghasilkan 112/112 tes lulus.
+> Jika `flutter test` menggantung saat mengambil dependensi (jaringan pub.dev lambat), jalankan `flutter test --concurrency=1 --no-pub` setelah `flutter pub get` pernah berhasil. Pemeriksaan terbaru menghasilkan 115/115 tes lulus.
 
 > **Timeout Gemini:** aplikasi menunggu maksimal 90 detik per permintaan. HTTP 503 memicu satu retry setelah jeda 2 detik untuk seluruh analisis; timeout dan HTTP 429 tidak diulang otomatis. Uji live terbaru pada `gemini-flash-latest` menerima HTTP 503 setelah 49,4 detik (model sedang menerima permintaan tinggi). Retry tidak menjamin layanan sudah pulih; contoh offline tetap tersedia.
 
@@ -132,7 +132,7 @@ Artefak QA (dimiliki peran D):
 | Pemeriksaan | Hasil |
 | --- | --- |
 | `flutter analyze --no-pub` | **LULUS: No issues found** |
-| `flutter test --concurrency=1 --no-pub` | **LULUS 112/112**, termasuk Career Journey, alur lokal, regresi timeout/retry Gemini, dan rotasi model |
+| `flutter test --concurrency=1 --no-pub` | **LULUS 115/115**, termasuk Career Journey, isolasi akun, rollback penyimpanan, alur lokal, regresi timeout/retry Gemini, dan rotasi model |
 | 5 skenario AI live | **LULUS 5/5** pada `gemini-3.1-flash-lite` (2026-11-14, rotasi aktif, `responseSchema` diterima); latensi 2,5–30,5 detik |
 | Build APK rilis | **BELUM DIUJI ULANG** setelah bug fixing; status lama tidak mewakili konfigurasi saat ini |
 | Build APK debug emulator x64 | **LULUS** setelah menyelaraskan versi toolchain Android; APK: `build/app/outputs/flutter-apk/app-debug.apk` |

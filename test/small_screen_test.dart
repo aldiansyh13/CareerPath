@@ -114,6 +114,41 @@ void main() {
     );
     await expectNoOverflow(tester);
     expect(find.text('Lihat ringkasan'), findsOneWidget);
+    await scrollTo(tester, find.text('Pemrograman Dasar'));
+    expect(find.text('Pemrograman Dasar'), findsOneWidget);
+  });
+
+  testWidgets('Penilaian dan ringkasan skill mengikuti jurusan Akuntansi',
+      (tester) async {
+    final p = AssessmentProvider()
+      ..setProfile(
+        const UserProfile(name: 'Ayu', major: 'Akuntansi', semester: 4),
+      );
+    await pumpSmall(
+      tester,
+      ChangeNotifierProvider<AssessmentProvider>.value(
+        value: p,
+        child: const SkillScreen(),
+      ),
+    );
+
+    expect(find.text('Pencatatan Transaksi'), findsOneWidget);
+    expect(find.text('Pemrograman Dasar'), findsNothing);
+
+    for (final skill in p.activeSkills) {
+      p.setSkill(skill.id, 4);
+    }
+    await pumpSmall(
+      tester,
+      ChangeNotifierProvider<AssessmentProvider>.value(
+        value: p,
+        child: const SummaryScreen(),
+      ),
+    );
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(find.text('Pencatatan Transaksi'), findsOneWidget);
+    expect(find.text('4 / 5'), findsWidgets);
   });
 
   testWidgets('Ringkasan aman di layar kecil', (tester) async {

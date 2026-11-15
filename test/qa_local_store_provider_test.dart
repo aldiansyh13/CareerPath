@@ -85,15 +85,8 @@ void main() {
       for (int i = 1; i <= 8; i++) {
         provider.setInterest('q$i', 'Opsi $i');
       }
-      for (final id in <String>[
-        'logic',
-        'design',
-        'data',
-        'communication',
-        'coding',
-        'leadership',
-      ]) {
-        provider.setSkill(id, 3);
+      for (final skill in provider.activeSkills) {
+        provider.setSkill(skill.id, 3);
       }
 
       expect(provider.interestsComplete, isTrue);
@@ -158,6 +151,59 @@ void main() {
         provider.setSkill(key, 5);
       }
       expect(provider.skillRatings.values.toSet(), <int>{5});
+    });
+
+    test('mengganti kelompok jurusan menghapus minat dan skill lama', () {
+      final provider = AssessmentProvider();
+      provider.setProfile(
+        const UserProfile(name: 'Uji', major: 'Akuntansi', semester: 3),
+      );
+      provider.setInterest('q1', 'Laporan keuangan');
+      provider.setSkill(provider.activeSkills.first.id, 4);
+
+      provider.setProfile(
+        const UserProfile(name: 'Uji', major: 'Informatika', semester: 3),
+      );
+
+      expect(provider.interestAnswers, isEmpty);
+      expect(provider.skillRatings, isEmpty);
+      expect(provider.activeSkills.map((skill) => skill.id),
+          contains('it_coding'));
+    });
+
+    test('mengubah nama jurusan dalam kelompok sama mempertahankan jawaban',
+        () {
+      final provider = AssessmentProvider();
+      provider.setProfile(
+        const UserProfile(name: 'Uji', major: 'Akuntansi', semester: 3),
+      );
+      provider.setInterest('q1', 'Audit');
+      provider.setSkill(provider.activeSkills.first.id, 4);
+
+      provider.setProfile(
+        const UserProfile(
+            name: 'Uji', major: 'Komputerisasi Akuntansi', semester: 4),
+      );
+
+      expect(provider.interestAnswers['q1'], 'Audit');
+      expect(provider.skillRatings, hasLength(1));
+    });
+
+    test('payload AI memuat rating dan label skill jurusan aktif', () {
+      final provider = AssessmentProvider();
+      provider.setProfile(
+        const UserProfile(name: 'Uji', major: 'Akuntansi', semester: 3),
+      );
+      for (final skill in provider.activeSkills) {
+        provider.setSkill(skill.id, 4);
+      }
+
+      final input = provider.buildInput();
+      final labels = input['skill_labels'] as Map;
+      expect((input['skills'] as Map), hasLength(6));
+      expect(labels, hasLength(6));
+      expect(labels.values, contains('Penyusunan Laporan Keuangan'));
+      expect(provider.skillsComplete, isTrue);
     });
   });
 }
