@@ -30,8 +30,14 @@ class _InvalidResultException extends GeminiException {
   const _InvalidResultException(super.message);
 }
 
+/// Model tertentu tidak dapat dipakai (404 dicabut atau 429 kuota habis).
+/// Rotasi boleh mencoba model berikutnya pada GEMINI_MODEL.
+class _ModelUnavailableException extends GeminiException {
+  const _ModelUnavailableException(super.message);
+}
+
 class GeminiService {
-  static const Duration defaultTimeout = Duration(seconds: 40);
+  static const Duration defaultTimeout = Duration(seconds: 90);
 
   /// Mencegah dua permintaan Gemini berjalan bersamaan (klik ganda).
   static bool _requestInFlight = false;
@@ -40,12 +46,16 @@ class GeminiService {
   final String? _apiKeyOverride;
   final String? _modelOverride;
   final Duration timeout;
+  final void Function()? onRetry;
+  final void Function(String from, String to)? onModelSwitch;
 
   GeminiService({
     http.Client? client,
     String? apiKey,
     String? model,
     Duration? timeout,
+    this.onRetry,
+    this.onModelSwitch,
   })  : _client = client,
         _apiKeyOverride = apiKey,
         _modelOverride = model,
@@ -59,6 +69,7 @@ class GeminiService {
       '- Hanya pilih dari daftar karier yang diberikan; jangan menambah karier lain.\n'
       '- match_score berupa angka bulat 0-100, realistis dan bervariasi (jangan semuanya 100).\n'
       '- Alasan harus merujuk pada data pengguna (jurusan, semester, minat, atau skor skill), bukan klaim umum.\n'
+      '- Rekomendasi harus relevan dengan jurusan pengguna. Jangan memaksakan karier IT/teknologi jika jurusan dan jawaban minat pengguna tidak mendukung.\n'
       '- Roadmap tepat 4 minggu (week 1 sampai 4), tiap minggu punya aksi konkret, realistis, dan bisa diselesaikan mahasiswa dalam 30 hari.\n'
       '- skills_owned dan skills_missing berisi istilah skill konkret yang relevan.\n'
       '- Jangan menjanjikan gaji, jaminan magang, atau jaminan diterima kerja.\n'
@@ -70,18 +81,30 @@ class GeminiService {
     return (dotenv.env['GEMINI_API_KEY'] ?? '').trim();
   }
 
-  String get _model {
-    if (_modelOverride != null) return _modelOverride.trim();
-    if (!dotenv.isInitialized) return '';
-    return (dotenv.env['GEMINI_MODEL'] ?? '').trim();
+  /// Daftar model dari GEMINI_MODEL (dipisah koma) untuk rotasi otomatis.
+  /// Urutan percobaan mengikuti urutan di konfigurasi.
+  List<String> get _models {
+    final String raw;
+    if (_modelOverride != null) {
+      raw = _modelOverride.trim();
+    } else if (dotenv.isInitialized) {
+      raw = (dotenv.env['GEMINI_MODEL'] ?? '').trim();
+    } else {
+      raw = '';
+    }
+    return raw
+        .split(',')
+        .map((entry) => entry.trim())
+        .where((entry) => entry.isNotEmpty)
+        .toList(growable: false);
   }
 
-  bool get isConfigured => _apiKey.isNotEmpty && _model.isNotEmpty;
+  bool get isConfigured => _apiKey.isNotEmpty && _models.isNotEmpty;
 
   Future<CareerResult> analyzeCareer(Map<String, dynamic> userData) async {
     final apiKey = _apiKey;
-    final model = _model;
-    if (apiKey.isEmpty || model.isEmpty) {
+    final models = _models;
+    if (apiKey.isEmpty || models.isEmpty) {
       throw GeminiConfigException(
         'Gemini belum dikonfigurasi. Isi GEMINI_API_KEY dan GEMINI_MODEL di file .env (jalur A).',
       );
@@ -97,55 +120,23 @@ class GeminiService {
     final shouldCloseClient = _client == null;
 
     try {
-      final url = Uri.parse(
-        'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent',
-      );
-      var body = _buildBody(userData);
-
-      // Model kadang melanggar kontrak JSON. Satu percobaan perbaikan dengan
-      // instruksi tambahan membuat hasil jauh lebih stabil tanpa mengulang
-      // error jaringan/kuota.
-      for (var attempt = 1; attempt <= 2; attempt++) {
-        var response = await _post(client, url, apiKey, body);
-
-        // Sebagian model/versi API menolak responseSchema. Coba sekali lagi
-        // tanpa schema agar prompt + responseMimeType tetap dipakai.
-        if (response.statusCode == 400 &&
-            _looksLikeSchemaError(_bodyText(response))) {
-          body = _withoutResponseSchema(body);
-          response = await _post(client, url, apiKey, body);
-        }
-
-        if (response.statusCode != 200) {
-          throw GeminiException(_describeHttpError(response, apiKey));
-        }
-
-        final text = _extractText(_bodyText(response));
-
+      for (var index = 0; index < models.length; index++) {
+        final model = models[index];
         try {
-          final decoded = _decodeJsonObject(_stripCodeFence(text));
-          return validateAndParseResult(decoded);
-        } on ResultValidationException catch (e) {
-          if (attempt == 1) {
-            body = _buildBody(userData, correction: e.message);
-            continue;
+          return await _analyzeWithModel(client, apiKey, model, userData);
+        } on _ModelUnavailableException catch (error) {
+          if (index >= models.length - 1) {
+            if (models.length > 1) {
+              throw GeminiException(
+                'Semua ${models.length} model Gemini yang dikonfigurasi gagal. '
+                '${error.message}',
+              );
+            }
+            rethrow;
           }
-          throw GeminiException(
-            'Hasil analisis tidak sesuai format: ${e.message} '
-            'Coba lagi atau gunakan contoh hasil.',
-          );
-        } on _InvalidResultException catch (e) {
-          if (attempt == 1) {
-            body = _buildBody(userData, correction: e.message);
-            continue;
-          }
-          throw GeminiException(
-            'Hasil analisis tidak sesuai format: ${e.message} '
-            'Coba lagi atau gunakan contoh hasil.',
-          );
+          onModelSwitch?.call(model, models[index + 1]);
         }
       }
-
       throw const GeminiException(
         'Gemini tidak menghasilkan analisis yang valid. Coba lagi atau gunakan contoh hasil.',
       );
@@ -153,6 +144,86 @@ class GeminiService {
       if (shouldCloseClient) client.close();
       _requestInFlight = false;
     }
+  }
+
+  Future<CareerResult> _analyzeWithModel(
+    http.Client client,
+    String apiKey,
+    String model,
+    Map<String, dynamic> userData,
+  ) async {
+    final url = Uri.parse(
+      'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent',
+    );
+    var body = _buildBody(userData);
+    var busyRetryUsed = false;
+
+    Future<http.Response> send() async {
+      var response = await _post(client, url, apiKey, body);
+      // Satu retry 503 untuk seluruh analisis, termasuk perbaikan JSON/schema.
+      // Timeout tidak diulang otomatis: server mungkin masih memprosesnya.
+      if (response.statusCode == 503 && !busyRetryUsed) {
+        busyRetryUsed = true;
+        onRetry?.call();
+        await Future<void>.delayed(const Duration(seconds: 2));
+        response = await _post(client, url, apiKey, body);
+      }
+      return response;
+    }
+
+    // Model kadang melanggar kontrak JSON. Satu percobaan perbaikan dengan
+    // instruksi tambahan membuat hasil jauh lebih stabil tanpa mengulang
+    // error jaringan/kuota.
+    for (var attempt = 1; attempt <= 2; attempt++) {
+      var response = await send();
+
+      // Sebagian model/versi API menolak responseSchema. Coba sekali lagi
+      // tanpa schema agar prompt + responseMimeType tetap dipakai.
+      if (response.statusCode == 400 &&
+          _looksLikeSchemaError(_bodyText(response))) {
+        body = _withoutResponseSchema(body);
+        response = await send();
+      }
+
+      if (response.statusCode != 200) {
+        final message = _describeHttpError(response, apiKey);
+        // 404 (model dicabut) dan 429 (kuota harian habis) bersifat per-model:
+        // model berikutnya pada GEMINI_MODEL masih punya peluang.
+        if (response.statusCode == 404 || response.statusCode == 429) {
+          throw _ModelUnavailableException(message);
+        }
+        throw GeminiException(message);
+      }
+
+      final text = _extractText(_bodyText(response));
+
+      try {
+        final decoded = _decodeJsonObject(_stripCodeFence(text));
+        return validateAndParseResult(decoded);
+      } on ResultValidationException catch (e) {
+        if (attempt == 1) {
+          body = _buildBody(userData, correction: e.message);
+          continue;
+        }
+        throw GeminiException(
+          'Hasil analisis tidak sesuai format: ${e.message} '
+          'Coba lagi atau gunakan contoh hasil.',
+        );
+      } on _InvalidResultException catch (e) {
+        if (attempt == 1) {
+          body = _buildBody(userData, correction: e.message);
+          continue;
+        }
+        throw GeminiException(
+          'Hasil analisis tidak sesuai format: ${e.message} '
+          'Coba lagi atau gunakan contoh hasil.',
+        );
+      }
+    }
+
+    throw const GeminiException(
+      'Gemini tidak menghasilkan analisis yang valid. Coba lagi atau gunakan contoh hasil.',
+    );
   }
 
   Future<http.Response> _post(
@@ -175,7 +246,8 @@ class GeminiService {
     } on TimeoutException {
       throw GeminiException(
         'Permintaan ke Gemini melebihi batas waktu ${timeout.inSeconds} detik. '
-        'Periksa koneksi lalu coba lagi.',
+        'Server mungkin sedang sibuk atau koneksi lambat. '
+        'Coba lagi nanti atau gunakan contoh hasil.',
       );
     } on HandshakeException {
       throw const GeminiException(
@@ -205,6 +277,7 @@ class GeminiService {
         '"roadmap": [{"week": number, "title": string, "actions": [string]}]}]}\n\n'
         'Ketentuan tambahan:\n'
         '- Pilih tepat 3 karier berbeda dari daftar di atas, urut dari skor tertinggi.\n'
+        '- Sesuaikan pilihan dengan jurusan dan minat pengguna; jangan hanya memilih karier IT.\n'
         '- Tulis summary 2-3 kalimat tentang potensi pengguna.\n'
         '- Setiap reason minimal 2 kalimat dan menyebut minimal satu data pengguna.\n'
         '- Isi skills_owned dan skills_missing masing-masing minimal 2 item.\n'
@@ -460,6 +533,9 @@ class GeminiService {
         return 'Model Gemini tidak ditemukan. Periksa GEMINI_MODEL di .env.$suffix';
       case 429:
         return 'Kuota/batas permintaan Gemini tercapai. Coba lagi nanti atau gunakan contoh hasil.$suffix';
+      case 503:
+        return 'Server Gemini sedang sibuk (503). Percobaan ulang belum berhasil. '
+            'Coba lagi nanti atau gunakan contoh hasil.';
       default:
         if (response.statusCode >= 500) {
           return 'Server Gemini sedang bermasalah (${response.statusCode}). Coba lagi.$suffix';

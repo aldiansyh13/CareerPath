@@ -13,7 +13,8 @@ class AuthService {
   FirebaseAuth get _auth => FirebaseAuth.instance;
 
   bool get isReady => Firebase.apps.isNotEmpty;
-  Stream<User?> get authChanges => isReady ? _auth.authStateChanges() : const Stream<User?>.empty();
+  Stream<User?> get authChanges =>
+      isReady ? _auth.authStateChanges() : const Stream<User?>.empty();
   User? get currentUser => isReady ? _auth.currentUser : null;
 
   String friendlyError(FirebaseAuthException e) {
@@ -43,10 +44,12 @@ class AuthService {
 
   Future<UserCredential> register(String email, String password) async {
     if (!isReady) {
-      throw AuthFailure('Firebase belum dikonfigurasi. Lihat PANDUAN-FIREBASE-GEMINI.md.');
+      throw AuthFailure(
+          'Firebase belum dikonfigurasi. Lihat PANDUAN-FIREBASE-GEMINI.md.');
     }
     try {
-      return await _auth.createUserWithEmailAndPassword(email: email.trim(), password: password);
+      return await _auth.createUserWithEmailAndPassword(
+          email: email.trim(), password: password);
     } on FirebaseAuthException catch (e) {
       throw AuthFailure(friendlyError(e), code: e.code);
     }
@@ -54,10 +57,12 @@ class AuthService {
 
   Future<UserCredential> login(String email, String password) async {
     if (!isReady) {
-      throw AuthFailure('Firebase belum dikonfigurasi. Lihat PANDUAN-FIREBASE-GEMINI.md.');
+      throw AuthFailure(
+          'Firebase belum dikonfigurasi. Lihat PANDUAN-FIREBASE-GEMINI.md.');
     }
     try {
-      return await _auth.signInWithEmailAndPassword(email: email.trim(), password: password);
+      return await _auth.signInWithEmailAndPassword(
+          email: email.trim(), password: password);
     } on FirebaseAuthException catch (e) {
       throw AuthFailure(friendlyError(e), code: e.code);
     }

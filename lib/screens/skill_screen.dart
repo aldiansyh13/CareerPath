@@ -12,7 +12,9 @@ class SkillScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AssessmentProvider>();
-    final rated = kSkillItems.where((s) => provider.skillRatings.containsKey(s.id)).length;
+    final rated = kSkillItems
+        .where((s) => provider.skillRatings.containsKey(s.id))
+        .length;
     final allDone = rated == kSkillItems.length;
     return Scaffold(
       appBar: AppBar(title: const Text('Skill')),
@@ -23,7 +25,8 @@ class SkillScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: ProgressHeader(
                 title: 'Penilaian Skill',
-                subtitle: 'Nilai kemampuanmu saat ini (1 = pemula, 5 = mahir). $rated/${kSkillItems.length} terisi.',
+                subtitle:
+                    'Nilai kemampuanmu saat ini (1 = pemula, 5 = mahir). $rated/${kSkillItems.length} terisi.',
                 progress: rated / kSkillItems.length,
               ),
             ),
@@ -42,9 +45,12 @@ class SkillScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(s.label, style: const TextStyle(fontWeight: FontWeight.w600)),
+                          Text(s.label,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 2),
-                          Text(s.hint, style: const TextStyle(color: Colors.black54)),
+                          Text(s.hint,
+                              style: const TextStyle(color: Colors.black54)),
                           Row(
                             children: [
                               const Text('1'),
@@ -55,14 +61,18 @@ class SkillScreen extends StatelessWidget {
                                   max: 5,
                                   divisions: 4,
                                   label: value.toString(),
-                                  onChanged: (v) => context.read<AssessmentProvider>().setSkill(s.id, v.round()),
+                                  onChanged: (v) => context
+                                      .read<AssessmentProvider>()
+                                      .setSkill(s.id, v.round()),
                                 ),
                               ),
                               const Text('5'),
                               SizedBox(
                                 width: 32,
-                                child: Text(isSet ? '$value' : '-', textAlign: TextAlign.center,
-                                    style: const TextStyle(fontWeight: FontWeight.w700)),
+                                child: Text(isSet ? '$value' : '-',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w700)),
                               ),
                             ],
                           ),
@@ -70,7 +80,9 @@ class SkillScreen extends StatelessWidget {
                             Align(
                               alignment: Alignment.centerLeft,
                               child: TextButton(
-                                onPressed: () => context.read<AssessmentProvider>().setSkill(s.id, value),
+                                onPressed: () => context
+                                    .read<AssessmentProvider>()
+                                    .setSkill(s.id, value),
                                 child: const Text('Tetapkan nilai ini'),
                               ),
                             ),
@@ -85,7 +97,8 @@ class SkillScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: FilledButton(
                 onPressed: allDone
-                    ? () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SummaryScreen()))
+                    ? () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const SummaryScreen()))
                     : null,
                 child: const Text('Lihat ringkasan'),
               ),

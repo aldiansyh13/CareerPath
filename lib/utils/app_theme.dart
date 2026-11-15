@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'constants.dart';
 
 ThemeData buildAppTheme() {
-  final scheme = ColorScheme.fromSeed(seedColor: AppColors.seed, surface: AppColors.surface);
+  final scheme = ColorScheme.fromSeed(
+      seedColor: AppColors.seed, surface: AppColors.surface);
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
@@ -21,14 +22,19 @@ ThemeData buildAppTheme() {
     ),
     cardTheme: CardThemeData(
       elevation: 0,
-      color: Colors.white,
+      color: scheme.surfaceContainerLowest,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       margin: EdgeInsets.zero,
     ),
     inputDecorationTheme: InputDecorationTheme(
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: scheme.surfaceContainerLowest,
+    ),
+    progressIndicatorTheme: ProgressIndicatorThemeData(
+      color: scheme.tertiary,
+      linearTrackColor: scheme.surfaceContainerHighest,
+      linearMinHeight: 8,
     ),
   );
 }

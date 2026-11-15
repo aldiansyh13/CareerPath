@@ -1,6 +1,6 @@
 # Pembagian Tugas Tim — CareerPath AI
 
-Dokumen ini merangkum **fitur yang dibutuhkan** (berdasarkan `CareerPath AI - Hackathon 1 Brainstorming.md`, `CareerPath AI - Hackathon 2 PRD.md`, dan `CareerPath AI - Hackathon 3 To-Do dan Laporan Progres.md`) dan membaginya menjadi **4 tanggung jawab** untuk tim beranggotakan 4 orang.
+Dokumen ini merangkum **fitur yang dibutuhkan** (berdasarkan `CareerPath AI - Hackathon 1 Brainstorming.md`, `CareerPath AI - Hackathon 2 PRD.md`, dan `CareerPath AI - Hackathon 3 To-Do dan Laporan Progres.md`) dan membaginya menjadi **5 tanggung jawab** untuk tim beranggotakan 5 orang.
 
 - **Prioritas:** **Must** = wajib untuk MVP/demo (selesai & teruji). **Should** = sangat disarankan. **Could** = nilai tambah jika waktu aman (setelah gerbang Blok C/D stabil).
 - **Aturan kerja:** satu tugas bermakna → jalankan/uji → catat di `HASIL-KERJA.md` & sinkronkan checklist di To-Do. Jangan commit/share `.env`, API key, token, atau sandi.
@@ -120,6 +120,27 @@ Dokumen ini merangkum **fitur yang dibutuhkan** (berdasarkan `CareerPath AI - Ha
 
 ### Ketergantungan
 - Seluruh tim untuk perbaikan bug & bukti fitur; akses build/device & akun demo.
+
+---
+
+## Orang 5 — Habib (Bug Fixing)
+
+**Fokus:** menelusuri akar masalah dan memperbaiki bug yang menghambat aplikasi, alur pengguna, serta penyimpanan data.
+
+### Tanggung jawab utama
+- [ ] **Kompilasi & startup (Must):** perbaiki error analyzer, entry point CareerPath, provider, konfigurasi awal Firebase/Gemini, dan pemulihan profil.
+- [ ] **Bug alur & lifecycle (Must):** perbaiki navigasi, ulang asesmen, dan pembaruan layar setelah proses asynchronous agar tidak terjadi `setState` setelah layar ditutup.
+- [ ] **Penyimpanan & riwayat (Must):** tampilkan kegagalan simpan secara jelas, pertahankan hasil lokal yang belum tersinkron, cegah duplikasi dan pencampuran cache antar-akun.
+- [ ] **Tes regresi (Must):** tambahkan pengujian untuk bug yang diperbaiki dan jalankan `flutter analyze --no-pub` serta `flutter test --no-pub`.
+- [ ] **Pelacakan perbaikan (Must):** catat akar masalah, file yang berubah, bukti pengujian, dan keterbatasan di `HASIL-KERJA.md`; serahkan hasil kepada Sabrina untuk validasi QA.
+
+### Deliverable
+- Patch bug fixing, tes regresi, dan laporan hasil pemeriksaan yang dapat diulang.
+- Daftar kendala integrasi/perangkat yang masih membutuhkan pengujian langsung.
+
+### Ketergantungan
+- Koordinasi dengan Aldi untuk UI/navigasi, Lutfi untuk Firebase/data, Faji untuk Gemini, dan Sabrina untuk reproduksi serta pengujian ulang.
+- Sabrina tetap memegang QA dan triase; Habib menangani implementasi perbaikan lintas bagian bersama pemilik fitur.
 
 ---
 

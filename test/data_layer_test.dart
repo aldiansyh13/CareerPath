@@ -15,8 +15,11 @@ void main() {
     expect(back.semester, 6);
   });
 
-  test('Sample result passes validator and has 3 careers with 4-week roadmap', () {
-    final result = validateAndParseResult(Map<String, dynamic>.from(kSampleResult), isSample: true);
+  test('Sample result passes validator and has 3 careers with 4-week roadmap',
+      () {
+    final result = validateAndParseResult(
+        Map<String, dynamic>.from(kSampleResult),
+        isSample: true);
     expect(result.careers.length, 3);
     expect(result.isSample, true);
     for (final c in result.careers) {
@@ -27,7 +30,9 @@ void main() {
   });
 
   test('AssessmentRecord round-trip', () {
-    final result = validateAndParseResult(Map<String, dynamic>.from(kSampleResult), isSample: true);
+    final result = validateAndParseResult(
+        Map<String, dynamic>.from(kSampleResult),
+        isSample: true);
     final record = AssessmentRecord(
       id: 'r1',
       createdAt: DateTime.parse('2026-11-14T10:00:00.000Z'),

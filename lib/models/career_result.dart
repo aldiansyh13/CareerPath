@@ -3,7 +3,8 @@ class RoadmapWeek {
   final String title;
   final List<String> actions;
 
-  const RoadmapWeek({required this.week, required this.title, required this.actions});
+  const RoadmapWeek(
+      {required this.week, required this.title, required this.actions});
 
   factory RoadmapWeek.fromJson(Map<String, dynamic> json) {
     return RoadmapWeek(
@@ -15,7 +16,8 @@ class RoadmapWeek {
     );
   }
 
-  Map<String, dynamic> toJson() => {'week': week, 'title': title, 'actions': actions};
+  Map<String, dynamic> toJson() =>
+      {'week': week, 'title': title, 'actions': actions};
 }
 
 class CareerRecommendation {
@@ -68,9 +70,11 @@ class CareerResult {
   final List<CareerRecommendation> careers;
   final bool isSample;
 
-  const CareerResult({required this.summary, required this.careers, this.isSample = false});
+  const CareerResult(
+      {required this.summary, required this.careers, this.isSample = false});
 
-  factory CareerResult.fromJson(Map<String, dynamic> json, {bool isSample = false}) {
+  factory CareerResult.fromJson(Map<String, dynamic> json,
+      {bool isSample = false}) {
     final careers = (json['careers'] as List<dynamic>? ?? const [])
         .whereType<Map>()
         .map((e) => CareerRecommendation.fromJson(Map<String, dynamic>.from(e)))
@@ -110,12 +114,15 @@ class AssessmentRecord {
       };
 
   factory AssessmentRecord.fromJson(Map<String, dynamic> json) {
-    final resultMap = Map<String, dynamic>.from(json['result'] as Map? ?? const {});
+    final resultMap =
+        Map<String, dynamic>.from(json['result'] as Map? ?? const {});
     return AssessmentRecord(
       id: (json['id'] ?? '') as String,
-      createdAt: DateTime.tryParse((json['createdAt'] ?? '') as String) ?? DateTime.now(),
+      createdAt: DateTime.tryParse((json['createdAt'] ?? '') as String) ??
+          DateTime.now(),
       input: Map<String, dynamic>.from(json['input'] as Map? ?? const {}),
-      result: CareerResult.fromJson(resultMap, isSample: json['isSample'] == true),
+      result:
+          CareerResult.fromJson(resultMap, isSample: json['isSample'] == true),
     );
   }
 }

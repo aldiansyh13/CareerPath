@@ -31,13 +31,24 @@ class WelcomeScreen extends StatelessWidget {
                       children: [
                         const SizedBox(height: 24),
                         Text(AppStrings.appName,
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(fontWeight: FontWeight.w800)),
                         const SizedBox(height: 8),
-                        Text(AppStrings.tagline, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black54)),
+                        Text(AppStrings.tagline,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(color: Colors.black54)),
                         const SizedBox(height: 24),
                         _Bullet(text: 'Asesmen minat & skill sekitar 2 menit'),
-                        _Bullet(text: '3 rekomendasi karier dengan alasan transparan'),
-                        _Bullet(text: 'Roadmap belajar 30 hari yang bisa dikerjakan'),
+                        _Bullet(
+                            text:
+                                '3 rekomendasi karier dengan alasan transparan'),
+                        _Bullet(
+                            text:
+                                'Roadmap belajar 30 hari yang bisa dikerjakan'),
                       ],
                     ),
                     Column(
@@ -47,7 +58,8 @@ class WelcomeScreen extends StatelessWidget {
                         FilledButton(
                           onPressed: () {
                             Navigator.of(context).push(MaterialPageRoute(
-                              builder: (_) => ProfileScreen(startAssessmentAfter: true),
+                              builder: (_) =>
+                                  ProfileScreen(startAssessmentAfter: true),
                             ));
                           },
                           child: const Text('Mulai asesmen'),
@@ -55,14 +67,17 @@ class WelcomeScreen extends StatelessWidget {
                         const SizedBox(height: 10),
                         OutlinedButton(
                           onPressed: () {
-                            Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AuthScreen()));
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (_) => const AuthScreen()));
                           },
                           child: const Text('Masuk / Daftar'),
                         ),
                         const SizedBox(height: 10),
                         TextButton(
                           onPressed: () {
-                            final result = validateAndParseResult(Map<String, dynamic>.from(kSampleResult), isSample: true);
+                            final result = validateAndParseResult(
+                                Map<String, dynamic>.from(kSampleResult),
+                                isSample: true);
                             Navigator.of(context).push(MaterialPageRoute(
                               builder: (_) => ResultScreen(
                                 result: result,
