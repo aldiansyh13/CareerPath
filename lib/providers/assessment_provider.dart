@@ -12,6 +12,13 @@ class AssessmentProvider extends ChangeNotifier {
   Map<String, int> get skillRatings => Map.unmodifiable(_skillRatings);
 
   void setProfile(UserProfile profile) {
+    final previousMajor = _profile?.major.trim().toLowerCase();
+    final nextMajor = profile.major.trim().toLowerCase();
+    // Pertanyaan minat mengikuti jurusan, jadi jawaban lama tidak boleh
+    // dipakai ulang saat jurusan berubah.
+    if (previousMajor != nextMajor) {
+      _interestAnswers.clear();
+    }
     _profile = profile;
     notifyListeners();
   }
@@ -29,8 +36,10 @@ class AssessmentProvider extends ChangeNotifier {
   bool get interestsComplete => _interestAnswers.length >= 8; // expects 8 ids
   bool get skillsComplete => _skillRatings.length >= 6;
 
-  bool interestsCompleteFor(Set<String> ids) => ids.every(_interestAnswers.containsKey);
-  bool skillsCompleteFor(Set<String> ids) => ids.every(_skillRatings.containsKey);
+  bool interestsCompleteFor(Set<String> ids) =>
+      ids.every(_interestAnswers.containsKey);
+  bool skillsCompleteFor(Set<String> ids) =>
+      ids.every(_skillRatings.containsKey);
 
   Map<String, dynamic> buildInput() {
     return {
@@ -62,7 +71,8 @@ class AssessmentProvider extends ChangeNotifier {
     if (skills is Map) {
       _skillRatings
         ..clear()
-        ..addAll(skills.map((k, v) => MapEntry(k.toString(), (v as num).toInt())));
+        ..addAll(
+            skills.map((k, v) => MapEntry(k.toString(), (v as num).toInt())));
     }
     notifyListeners();
   }

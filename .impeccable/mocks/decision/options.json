@@ -1,0 +1,43 @@
+{
+  "title": "Pilih dunia visual CareerPath AI",
+  "question": "Mana yang paling terasa seperti tempat melanjutkan perjalanan karier, bukan sekadar melihat hasil asesmen?",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Apprenticeship Logbook",
+      "kicker": "THE ROLL",
+      "lineage": "buku kerja praktik dan paspor kompetensi",
+      "thesis": "Perjalanan karier terasa nyata lewat misi mingguan, bukti progres, dan cap skill.",
+      "palette": ["#183A37", "#DCE7DD", "#F2C14E", "#F8F4EA", "#D65A3A"],
+      "materials": ["kertas kerja bertekstur halus", "cap kompetensi", "garis rute tinta"],
+      "viewport": "Beranda dibuka dengan fokus karier aktif, misi minggu ini, satu aksi lanjut, dan log skill yang bertumbuh.",
+      "risk": "Bisa terasa terlalu tematik jika cap dan tekstur mengalahkan keterbacaan Material 3.",
+      "comp": ".impeccable/mocks/decision/assigned.png"
+    },
+    {
+      "id": "model-pick",
+      "label": "Degree Audit",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "transkrip akademik dan peta kurikulum kampus",
+      "thesis": "Career path dibaca seperti syarat kelulusan pribadi: jelas apa yang sudah kuat, kurang, dan berikutnya.",
+      "palette": ["#172554", "#E8EEF9", "#2563EB", "#F7F8FC", "#F59E0B"],
+      "materials": ["grid kurikulum", "penanda status", "lembar progres akademik"],
+      "viewport": "Beranda menampilkan jalur fokus, persentase kesiapan, modul minggu berjalan, dan matriks skill ringkas.",
+      "risk": "Paling mudah dipahami, tetapi dapat terasa administratif jika tidak diberi kehangatan dan momentum.",
+      "comp": ".impeccable/mocks/decision/model-pick.png"
+    }
+  ],
+  "reroll": {"registers": ["safer", "bolder"]},
+  "buildPath": {"value": "comp", "toggle": true},
+  "canon": true,
+  "canonCard": {
+    "label": "Dashboard karier standar",
+    "thesis": "Dashboard kartu dan grafik yang familiar, dieksekusi dengan rapi.",
+    "palette": ["#FFFFFF", "#111827", "#4F46E5", "#F3F4F6"],
+    "materials": ["kartu bersih", "progress ring", "ikon outline"],
+    "viewport": "Sapaan, grafik progres, rekomendasi karier, dan daftar aktivitas terbaru.",
+    "risk": "Mudah digunakan tetapi sulit dibedakan dari aplikasi belajar dan produktivitas lain.",
+    "comp": ".impeccable/mocks/decision/canon.png"
+  },
+  "steer": true
+}

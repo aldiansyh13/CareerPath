@@ -22,8 +22,8 @@ void main() {
 
     expect(find.text('0 dari ${kInterestQuestions.length} pertanyaan terisi'),
         findsOneWidget);
-    final nextButton = find.widgetWithText(
-        FilledButton, 'Lanjut ke penilaian skill');
+    final nextButton =
+        find.widgetWithText(FilledButton, 'Lanjut ke penilaian skill');
     expect(tester.widget<FilledButton>(nextButton).onPressed, isNull,
         reason: 'Tombol lanjut harus nonaktif sebelum semua pertanyaan terisi');
 
