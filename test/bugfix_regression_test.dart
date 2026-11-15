@@ -119,4 +119,19 @@ void main() {
     expect(provider.skillRatings, isEmpty);
     expect(provider.profile, isNotNull);
   });
+
+  testWidgets('Muat ulang beranda tidak mengembalikan Future dari setState',
+      (tester) async {
+    final provider = AssessmentProvider();
+    await tester.pumpWidget(ChangeNotifierProvider.value(
+      value: provider,
+      child: const MaterialApp(home: HomeScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Muat ulang'));
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+  });
 }

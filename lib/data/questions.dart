@@ -1,3 +1,5 @@
+import 'major_groups.dart';
+
 class InterestQuestion {
   final String id;
   final String text;
@@ -842,151 +844,29 @@ const List<InterestQuestion> _communicationQuestions = [
   ),
 ];
 
-class _MajorQuestionSet {
-  final String id;
-  final List<String> keywords;
-  final List<InterestQuestion> questions;
-
-  const _MajorQuestionSet(this.id, this.keywords, this.questions);
-}
-
-/// Urutan pengecekan penting: jurusan yang lebih spesifik diperiksa lebih dulu.
-const List<_MajorQuestionSet> _majorQuestionSets = [
-  _MajorQuestionSet(
-      'it',
-      [
-        'informatika',
-        'ilmu komputer',
-        'sistem informasi',
-        'teknologi informasi',
-        'teknologi komputer',
-        'rekayasa perangkat lunak',
-        'software',
-        'data science',
-        'sains data',
-        'kecerdasan artifisial',
-        'keamanan siber',
-        'cyber',
-        'multimedia',
-        'animasi',
-        'game',
-      ],
-      _itQuestions),
-  _MajorQuestionSet(
-      'accounting',
-      [
-        'akuntansi',
-        'akuntan',
-        'perpajakan',
-        'pajak',
-        'komputerisasi akuntansi',
-      ],
-      _accountingQuestions),
-  _MajorQuestionSet(
-      'health',
-      [
-        'kedokteran',
-        'keperawatan',
-        'kebidanan',
-        'farmasi',
-        'gizi',
-        'kesehatan',
-        'fisioterapi',
-        'radiologi',
-        'analis kesehatan',
-      ],
-      _healthQuestions),
-  _MajorQuestionSet(
-      'law',
-      [
-        'hukum',
-        'kenotariatan',
-        'notaris',
-      ],
-      _lawQuestions),
-  _MajorQuestionSet(
-      'education',
-      [
-        'pendidikan',
-        'keguruan',
-        'pgsd',
-        'paud',
-        'bimbingan konseling',
-      ],
-      _educationQuestions),
-  _MajorQuestionSet(
-      'psychology',
-      [
-        'psikologi',
-        'sosiologi',
-        'antropologi',
-        'ilmu sosial',
-        'kesejahteraan sosial',
-        'pekerja sosial',
-      ],
-      _psychologyQuestions),
-  _MajorQuestionSet(
-      'communication',
-      [
-        'komunikasi',
-        'humas',
-        'public relation',
-        'jurnalistik',
-        'penyiaran',
-        'desain komunikasi visual',
-        'dkv',
-        'desain',
-        'seni',
-        'sastra',
-        'bahasa',
-        'film',
-        'fotografi',
-        'periklanan',
-      ],
-      _communicationQuestions),
-  _MajorQuestionSet(
-      'engineering',
-      [
-        'teknik',
-        'mesin',
-        'sipil',
-        'elektro',
-        'industri',
-        'arsitektur',
-        'kimia',
-        'pertambangan',
-        'geologi',
-        'lingkungan',
-      ],
-      _engineeringQuestions),
-  _MajorQuestionSet(
-      'business',
-      [
-        'manajemen',
-        'bisnis',
-        'ekonomi',
-        'administrasi',
-        'kewirausahaan',
-        'perbankan',
-        'keuangan',
-        'pemasaran',
-        'marketing',
-        'logistik',
-        'supply chain',
-        'pariwisata',
-      ],
-      _businessQuestions),
-];
-
 /// Mengembalikan 8 pertanyaan minat yang paling relevan dengan jurusan.
 /// Bila jurusan belum dikenali, dipakai pertanyaan umum lintas jurusan.
 List<InterestQuestion> interestQuestionsForMajor(String? major) {
-  final normalized = (major ?? '').trim().toLowerCase();
-  if (normalized.isEmpty) return kInterestQuestions;
-  for (final entry in _majorQuestionSets) {
-    for (final keyword in entry.keywords) {
-      if (normalized.contains(keyword)) return entry.questions;
-    }
+  switch (majorGroupForMajor(major)) {
+    case MajorGroup.it:
+      return _itQuestions;
+    case MajorGroup.accounting:
+      return _accountingQuestions;
+    case MajorGroup.health:
+      return _healthQuestions;
+    case MajorGroup.law:
+      return _lawQuestions;
+    case MajorGroup.education:
+      return _educationQuestions;
+    case MajorGroup.psychology:
+      return _psychologyQuestions;
+    case MajorGroup.communication:
+      return _communicationQuestions;
+    case MajorGroup.engineering:
+      return _engineeringQuestions;
+    case MajorGroup.business:
+      return _businessQuestions;
+    case MajorGroup.general:
+      return kInterestQuestions;
   }
-  return kInterestQuestions;
 }

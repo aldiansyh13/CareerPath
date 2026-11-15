@@ -91,7 +91,7 @@
 - [x] Run focused tests with `--concurrency=1 --no-pub`; observed RED.
 - [x] Implement lightweight Apprenticeship Logbook theme and journey-first hero without new navigation.
 - [x] Run focused tests; PASS.
-- [x] Run `flutter test --concurrency=1 --no-pub`; PASS (112 tests).
+- [x] Run `flutter test --concurrency=1 --no-pub`; PASS (115 tests after review fix pass).
 
 ### Task 5: Verification and report
 
@@ -102,6 +102,6 @@
 
 - [x] Run `dart format lib test`.
 - [x] Run `flutter analyze --no-pub`; `No issues found`.
-- [x] Run `flutter test --concurrency=1 --no-pub`; PASS (112 tests).
+- [x] Run `flutter test --concurrency=1 --no-pub`; PASS (115 tests after review fix pass).
 - [x] Append Indonesian report: delivered flow, files, data decisions, test results, deferred ideas, and pending device QA.
 - [x] Run `git -c safe.directory=D:/CODE/mobile/CareerPath diff --check` and review status without touching unrelated user changes; no whitespace errors.
