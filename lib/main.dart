@@ -1,4 +1,3 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
@@ -20,13 +19,6 @@ Future<void> main() async {
     await dotenv.load(fileName: '.env');
   } catch (_) {
     // .env opsional untuk mode lokal/contoh; Gemini butuh key & model saat analisis AI.
-  }
-  try {
-    // Untuk proyek yang sudah menjalankan flutterfire configure, ganti dengan:
-    // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-    await Firebase.initializeApp();
-  } catch (_) {
-    // Firebase belum dikonfigurasi: aplikasi tetap berjalan mode lokal/offline.
   }
   runApp(const CareerPathApp());
 }
@@ -63,7 +55,7 @@ class _EntryGateState extends State<_EntryGate> {
   @override
   void initState() {
     super.initState();
-    final backend = AppBackend(LocalStore())..markFirebaseReady();
+    final backend = AppBackend(LocalStore());
     _hasProfileFuture = backend.getProfile().then((p) {
       if (p != null && mounted) {
         context.read<AssessmentProvider>().setProfile(p);
@@ -78,7 +70,8 @@ class _EntryGateState extends State<_EntryGate> {
       future: _hasProfileFuture,
       builder: (context, snap) {
         if (snap.connectionState != ConnectionState.done) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
         }
         final hasProfile = snap.data == true;
         // Sesi baru: welcome. Jika profil lokal/cloud sudah ada: beranda.

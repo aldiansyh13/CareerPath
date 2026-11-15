@@ -1,16 +1,11 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/user_profile.dart';
 import '../providers/assessment_provider.dart';
-import '../providers/journey_provider.dart';
 import '../services/app_backend.dart';
 import '../services/local_store.dart';
-import '../utils/constants.dart';
 import 'interest_screen.dart';
-import 'welcome_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final bool startAssessmentAfter;
@@ -56,16 +51,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       major: _major.text.trim(),
       semester: int.parse(_semester.text.trim()),
     );
-    final backend =
-        widget.backend ?? (AppBackend(LocalStore())..markFirebaseReady());
+    final backend = widget.backend ?? AppBackend(LocalStore());
     try {
       await backend.saveProfile(profile);
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text(
-            'Profil belum berhasil disimpan sepenuhnya. Periksa koneksi lalu coba lagi.'),
+        content: Text('Profil belum berhasil disimpan. Coba lagi.'),
       ));
       return;
     }
@@ -78,22 +71,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } else {
       Navigator.of(context).pop(true);
     }
-  }
-
-  bool get _signedIn =>
-      Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null;
-
-  Future<void> _signOut() async {
-    final backend = AppBackend(LocalStore())..markFirebaseReady();
-    await backend.signOut();
-    if (!mounted) return;
-    await context.read<JourneyProvider?>()?.switchStore(LocalStore());
-    if (!mounted) return;
-    context.read<AssessmentProvider>().resetAssessment(keepProfile: false);
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-      (r) => false,
-    );
   }
 
   @override
@@ -149,16 +126,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2))
                       : const Text('Simpan & lanjut'),
                 ),
-                if (_signedIn) ...[
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: _saving ? null : _signOut,
-                    icon: const Icon(Icons.logout),
-                    label: const Text('Keluar dari akun'),
-                    style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.danger),
-                  ),
-                ],
               ],
             ),
           ),

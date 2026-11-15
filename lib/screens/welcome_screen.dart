@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../data/sample_result.dart';
 import '../utils/constants.dart';
 import '../utils/validators.dart';
-import 'auth_screen.dart';
 import 'result_screen.dart';
 import 'profile_screen.dart';
 
@@ -63,14 +62,6 @@ class WelcomeScreen extends StatelessWidget {
                             ));
                           },
                           child: const Text('Mulai asesmen'),
-                        ),
-                        const SizedBox(height: 10),
-                        OutlinedButton(
-                          onPressed: () {
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (_) => const AuthScreen()));
-                          },
-                          child: const Text('Masuk / Daftar'),
                         ),
                         const SizedBox(height: 10),
                         TextButton(

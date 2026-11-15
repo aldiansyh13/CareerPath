@@ -45,7 +45,7 @@ class _AnalyzingScreenState extends State<AnalyzingScreen> {
     });
     final provider = context.read<AssessmentProvider>();
     final input = provider.buildInput();
-    final backend = AppBackend(LocalStore())..markFirebaseReady();
+    final backend = AppBackend(LocalStore());
 
     try {
       CareerResult result;
@@ -90,8 +90,7 @@ class _AnalyzingScreenState extends State<AnalyzingScreen> {
         if (mounted) {
           setState(() {
             _savingError = true;
-            _status =
-                'Hasil siap, namun gagal menyimpan ke penyimpanan cloud/lokal.';
+            _status = 'Hasil siap, namun gagal disimpan di perangkat.';
           });
         }
       }
